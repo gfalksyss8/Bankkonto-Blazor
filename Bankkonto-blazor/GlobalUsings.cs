@@ -1,0 +1,1 @@
+global using Bankkonto_blazor.Interfaces;
