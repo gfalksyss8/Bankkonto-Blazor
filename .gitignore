@@ -63,6 +63,7 @@ nunit-*.xml
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 !*.code-workspace
+Bankkonto-blazor.sln/
 
 # Built Visual Studio Code Extensions
 *.vsix
