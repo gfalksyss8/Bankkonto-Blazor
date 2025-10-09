@@ -1,7 +1,9 @@
+using Bankkonto_blazor.Domain;
+
 namespace Bankkonto_blazor.Interfaces;
 
 public interface IAccountService
 {
-    IBankAccount CreateAccount(string Name, string Currency, decimal initialBalance);
+    IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance);
     List<IBankAccount> GetAccounts();
 }

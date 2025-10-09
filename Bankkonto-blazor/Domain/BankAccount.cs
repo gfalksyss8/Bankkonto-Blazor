@@ -2,24 +2,24 @@ namespace Bankkonto_blazor.Domain;
 
 public class BankAccount : IBankAccount
 {
+    // Constructor
     private decimal initialBalance;
-
-    public BankAccount(string name, string currency, decimal initialBalance)
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public AccountType AccountType { get; private set; }
+    public string Name { get; private set; } = "NoName";
+    public string Currency { get; private set; } = "SEK";
+    public decimal Balance { get; private set; }
+    public DateTime LastUpdated { get; private set; }
+    
+    // Constructor set
+    public BankAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
         Name = name;
+        AccountType = accountType;
         Currency = currency;
-        this.initialBalance = initialBalance;
+        Balance = initialBalance;
+        LastUpdated = DateTime.Now;
     }
-
-    public Guid Id { get; private set; } = Guid.NewGuid();
-
-    public string Name { get; private set; } = "NoName";
-
-    public string Currency { get; private set; } = "SEK";
-
-    public decimal Balance { get; private set; }
-
-    public DateTime LastUpdated { get; private set; }
 
     public void Deposit(decimal amount)
     {
@@ -37,7 +37,7 @@ public class BankAccount : IBankAccount
         {
             if (reciever == account.Name)
             {
-                account.Balance += amount;
+                //account.Balance += amount;
                 Balance -= amount;
             }
         }

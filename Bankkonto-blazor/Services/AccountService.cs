@@ -1,23 +1,18 @@
-using Bankkonto_blazor.Domain;
-
 namespace Bankkonto_blazor.Services;
 
 public class AccountService : IAccountService
 {
     // List of all accounts
-    List<IBankAccount> accounts = new List<IBankAccount>();
+    private readonly List<IBankAccount> _accounts;
 
-    // Create new BankAccount using ID, add to List<IBankAccount> accounts
-    public IBankAccount CreateAccount(string name, string currency, decimal initialBalance)
+    // Create new BankAccount, add to List of all accounts, and return
+    public IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
-        BankAccount Id = new BankAccount(name, currency, initialBalance);
-        accounts.Add(Id);
-        return Id;
+        var account = new BankAccount(name, accountType, currency, initialBalance);
+        _accounts.Add(account);
+        return account;
     }
 
     // return list of accounts
-    public List<IBankAccount> GetAccounts()
-    {
-        return accounts;
-    }
+    public List<IBankAccount> GetAccounts() => _accounts;
 }
