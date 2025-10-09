@@ -35,7 +35,7 @@ public class BankAccount : IBankAccount
     {
         foreach (var account in accounts)
         {
-            if (reciever == account.Name)
+            if (reciever.ToLower() == account.Name.ToLower())
             {
                 //account.Balance += amount;
                 Balance -= amount;

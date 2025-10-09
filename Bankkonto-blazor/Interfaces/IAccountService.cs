@@ -1,5 +1,3 @@
-using Bankkonto_blazor.Domain;
-
 namespace Bankkonto_blazor.Interfaces;
 
 public interface IAccountService

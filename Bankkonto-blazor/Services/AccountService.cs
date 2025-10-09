@@ -3,7 +3,7 @@ namespace Bankkonto_blazor.Services;
 public class AccountService : IAccountService
 {
     // List of all accounts
-    private readonly List<IBankAccount> _accounts;
+    private readonly List<IBankAccount> _accounts = new();
 
     // Create new BankAccount, add to List of all accounts, and return
     public IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)

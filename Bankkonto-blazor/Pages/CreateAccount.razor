@@ -1,0 +1,74 @@
+@page "/CreateAccount"
+@inject IAccountService AccountService;
+
+<h3>Create a new account</h3>
+<EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <div className="mb-2">
+        <label>Kontonamn</label>
+        <InputText @bind-Value="_model.Name"/>
+    </div>
+<br />
+    <div className="mb-2">
+        <label>Kontotyp</label>
+        <InputSelect @bind-Value="_model.AccountType">
+            <option value="">Choose an account type</option>
+            <option value="@AccountType.Deposit">Deposit account</option>
+            <option value="@AccountType.Savings">Savings account</option>
+        </InputSelect>
+    </div>
+<br />
+    <div className="mb-2">
+        <label>Currency</label>
+        <InputText @bind-Value="_model.Currency"></InputText>
+    </div>
+<br />
+    <div>
+        <label>Initial amount</label>
+        <InputNumber @bind-Value="_model.InitialBalance"></InputNumber>
+    </div>
+<br />
+    <button type="submit">Finish creating account</button>
+    </EditForm>
+
+<br />
+<hr />
+@foreach (var account in AccountService.GetAccounts()) {
+    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
+}
+
+@code {
+    private readonly CreateAccountModel _model = new();
+
+    private Task CreateAccountAsync() {
+        try 
+        {
+            AccountService.CreateAccount(
+                _model.Name,
+                _model.AccountType,
+                _model.Currency,
+                _model.InitialBalance);
+        }
+        catch (Exception exception) 
+        {
+            Console.WriteLine(exception);
+            throw;
+        }
+        return Task.CompletedTask;
+    }
+
+    private class CreateAccountModel {
+        public string? Name {get;set;}
+        public AccountType AccountType {get;set;}
+        public string? Currency {get;set;}
+        public decimal InitialBalance {get;set;} = 0;
+
+        public void Clear() {
+            Name=string.Empty;
+            AccountType = AccountType.Deposit;
+            Currency = "SEK";
+            InitialBalance = 0;
+        }
+    }
+}
