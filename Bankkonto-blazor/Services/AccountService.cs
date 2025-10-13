@@ -15,4 +15,7 @@ public class AccountService : IAccountService
 
     // return list of accounts
     public List<IBankAccount> GetAccounts() => _accounts;
+
+    // User input int determines return index from list _accounts
+    public IBankAccount GetAccountIndex(int index) => _accounts[index];
 }

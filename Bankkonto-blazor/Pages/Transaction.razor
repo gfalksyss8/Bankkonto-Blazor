@@ -1,0 +1,57 @@
+@page "/Transaction"
+@using Microsoft.AspNetCore.Authorization.Infrastructure
+
+@inject IAccountService AccountService;
+
+<h3>Transaction</h3>
+<h4>Transfer balance between accounts</h4>
+
+<div className="mb-2">
+    <label>Choose account to send balance</label>
+    <InputSelect @bind-Value="senderIndex">
+        <option value="">Sender</option>
+        @foreach (var account in AccountService.GetAccounts()) {
+            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+
+<div className="mb-2">
+    <label>Choose account to recieve balance</label>
+    <InputSelect @bind-Value="recieverIndex">
+        <option value="">Reciever</option>
+        @foreach (var account in AccountService.GetAccounts()) {
+            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+
+@if (senderIndex != -1 && recieverIndex != -1) {
+
+    <br />
+    <p>Money in account @AccountService.GetAccountIndex(senderIndex).Name: @AccountService.GetAccountIndex(senderIndex).Balance @AccountService.GetAccountIndex(senderIndex).Currency</p>
+
+    <div className="mb-2">
+        <label>Amount to transfer to @AccountService.GetAccountIndex(recieverIndex).Name</label>
+        <InputNumber @bind-Value="transferAmount"></InputNumber>
+        <button @onclick="transferMethod">Transfer Balance</button>
+    </div>
+    <br/>
+
+    // Local warning message incase of misinput, clear after every successful method call or input from user
+    @if (warningMessage != string.Empty) {
+        <p style="color: red">@warningMessage</p>
+    }
+
+}
+
+@code {
+    int senderIndex = -1;
+    int recieverIndex = -1;
+    decimal transferAmount = 0;
+    string warningMessage = string.Empty;
+
+    void transferMethod() {
+
+    }
+}

@@ -1,7 +1,84 @@
 @page "/DepositWithdraw"
+@using Microsoft.VisualBasic
 @inject IAccountService AccountService;
 <h3>Deposit & Withdraw</h3>
 
+
+<div className="mb-2">
+    <label>Choose your account</label>
+    <InputSelect @bind-Value="chosenAccountIndex">
+        <option value="">Choose your account</option>
+        @foreach (var account in AccountService.GetAccounts()) {
+            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+
+<!-- Show withdraw and deposit input only after picking a valid account -->
+@if (chosenAccountIndex != -1) {
+    <br />
+    <p>Money in account: @AccountService.GetAccountIndex(chosenAccountIndex).Balance @AccountService.GetAccountIndex(chosenAccountIndex).Currency</p>
+
+    <div className="mb-2">
+        <label>Withdraw amount from @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
+        <InputNumber @bind-Value="withdrawAmount"></InputNumber>
+        <button onclick="@WithdrawMethod">Withdraw amount from account</button>
+    </div>
+
+    <br />
+    <div className="mb-2">
+        <label>Deposit amount to @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
+        <InputNumber @bind-Value="depositAmount"></InputNumber>
+        <button @onclick="DepositMethod">Deposit amount to account</button>
+    </div>
+    <br/>
+
+    // Local warning message incase of misinput, clear after every successful method call or input from user
+    @if (warningMessage != string.Empty) {
+        <p style="color: red">@warningMessage</p>
+    }
+}
+
+
 @code {
-    
+    // Declare variables
+    int chosenAccountIndex = -1;
+    decimal withdrawAmount = 0;
+    decimal depositAmount = 0;
+    string warningMessage = string.Empty;
+    void clearWarning() {
+        warningMessage = string.Empty;
+    }
+
+    // Deposit & Withdraw methods
+    void WithdrawMethod()
+    {
+        var account = AccountService.GetAccountIndex(chosenAccountIndex);
+        if (account != null) {
+            if (withdrawAmount < 0) {
+                warningMessage = "Cannot withdraw an negative amount from your account. To add balance, use the deposit label";
+            }
+            else if (withdrawAmount > AccountService.GetAccountIndex(chosenAccountIndex).Balance) {
+                warningMessage = "Cannot withdraw more balance than you have in your account.";
+            }
+            else {
+                account.Withdraw(withdrawAmount);
+                clearWarning();
+            }
+        }
+    }
+    void DepositMethod()
+    {
+        var account = AccountService.GetAccountIndex(chosenAccountIndex);
+        if (account != null) {
+            if (depositAmount < 0) {
+                warningMessage = "Cannot deposit an negative amount to your account. To remove balance, use the withdraw label";
+            }
+            else {
+                account.Deposit(depositAmount);
+                clearWarning();
+            }
+        }
+    }
+
 }
