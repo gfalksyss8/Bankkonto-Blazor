@@ -26,31 +26,27 @@ public class TransactionBank : ITransaction
     // Currency converter
     public Dictionary<string, decimal> ConversionRates = new Dictionary<string, decimal>
     {
-        ["sek"] = 1,
-        ["usd"] = 10.5m,
-        ["eur"] = 11.0m,
-        ["gbp"] = 13.0m,
-        ["jpy"] = 0.075m
+        ["SEK"] = 1,
+        ["USD"] = 10.5m,
+        ["EUR"] = 11.0m,
+        ["GBP"] = 13.0m,
+        ["JPY"] = 0.075m
     };
 
     // Transfer method
     public void Transfer(IBankAccount senderAccount, IBankAccount recieverAccount, decimal amount)
     {
         senderAccount.Withdraw(amount);
-        recieverAccount.Deposit(amount);
-        //recieverAccount.Deposit(amount * CurrencyConverter(senderAccount) / CurrencyConverter(recieverAccount));
+        //recieverAccount.Deposit(amount);
+        recieverAccount.Deposit(amount * CurrencyConverter(senderAccount) / CurrencyConverter(recieverAccount));
     }
     public decimal CurrencyConverter(IBankAccount account)
     {
-        foreach (var currency in ConversionRates)
+        foreach (var rates in ConversionRates)
         {
-            if (account.Currency.ToLower() == currency.Key.ToLower())
+            if (account.Currency == rates.Key)
             {
-                return currency.Value;
-            }
-            else
-            {
-                throw new Exception("Currency not supported");
+                return rates.Value;
             }
         }
         throw new Exception("Currency not supported");
