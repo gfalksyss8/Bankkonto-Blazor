@@ -1,4 +1,5 @@
 @page "/CreateAccount"
+@using System.Runtime.CompilerServices
 @inject IAccountService AccountService;
 
 <h3>Create a new account</h3>
@@ -34,28 +35,36 @@
 
 <br />
 <hr />
-@foreach (var account in AccountService.GetAccounts()) {
+@foreach (var account in _accounts) {
     <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
 }
 
 @code {
     private readonly CreateAccountModel _model = new();
+    private List<IBankAccount> _accounts = new();
 
-    private Task CreateAccountAsync() {
+    protected override async Task OnInitializedAsync() {
+        _accounts = await AccountService.GetAccounts();
+    }
+
+    private async Task CreateAccountAsync() {
         try 
         {
-            AccountService.CreateAccount(
+            await AccountService.CreateAccount(
                 _model.Name,
                 _model.AccountType,
                 _model.Currency,
                 _model.InitialBalance);
+
+            _accounts = await AccountService.GetAccounts();
+            _model.Clear();
+            StateHasChanged();
         }
         catch (Exception exception) 
         {
             Console.WriteLine(exception);
             throw;
         }
-        return Task.CompletedTask;
     }
 
     private class CreateAccountModel {

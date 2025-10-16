@@ -7,9 +7,9 @@
 <div className="mb-2">
     <label>Choose your account</label>
     <InputSelect @bind-Value="chosenAccountIndex">
-        <option value="">Choose your account</option>
-        @foreach (var account in AccountService.GetAccounts()) {
-            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        <option value="-1">Choose your account</option>
+        @foreach (var account in _accounts) {
+            <option value="@_accounts.IndexOf(account)">@account.Name</option>
         }
     </InputSelect>
 </div>
@@ -48,6 +48,12 @@
     string warningMessage = string.Empty;
     void clearWarning() {
         warningMessage = string.Empty;
+    }
+
+    // Create new list _accounts, set using GetAccounts() method
+    private List<IBankAccount> _accounts = new();
+    protected override async Task OnInitializedAsync() {
+        _accounts = await AccountService.GetAccounts();
     }
 
     // Deposit & Withdraw methods

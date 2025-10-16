@@ -9,9 +9,9 @@
 <div className="mb-2">
     <label>Choose account to send balance</label>
     <InputSelect @bind-Value="senderIndex">
-        <option value="">Sender</option>
-        @foreach (var account in AccountService.GetAccounts()) {
-            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        <option value="-1">Select a sender</option>
+        @foreach (var account in _accounts) {
+            <option value="@_accounts.IndexOf(account)">@account.Name</option>
         }
     </InputSelect>
 </div>
@@ -19,9 +19,9 @@
 <div className="mb-2">
     <label>Choose account to recieve balance</label>
     <InputSelect @bind-Value="recieverIndex">
-        <option value="">Reciever</option>
-        @foreach (var account in AccountService.GetAccounts()) {
-            <option value="@AccountService.GetAccounts().IndexOf(account)">@account.Name</option>
+        <option value="-1">Select a reciever</option>
+        @foreach (var account in _accounts) {
+            <option value="@_accounts.IndexOf(account)">@account.Name</option>
         }
     </InputSelect>
 </div>
@@ -38,9 +38,12 @@
     </div>
     <br/>
 
-    // Local warning message incase of misinput, clear after every successful method call or input from user
+    // Local warning & confirm message incase of misinput, clear after every successful method call or input from user
     @if (warningMessage != string.Empty) {
         <p style="color: red">@warningMessage</p>
+    }
+    @if (confirmMessage != string.Empty) {
+        <p style="color: green">@confirmMessage</p>
     }
 
 }
@@ -50,8 +53,19 @@
     int recieverIndex = -1;
     decimal transferAmount = 0;
     string warningMessage = string.Empty;
+    string confirmMessage = string.Empty;
+
+    // Create new list _accounts, set using GetAccounts() method
+    private List<IBankAccount> _accounts = new();
+    protected override async Task OnInitializedAsync() {
+        _accounts = await AccountService.GetAccounts();
+    }
 
     void transferMethod() {
-
+        var senderAddress = AccountService.GetAccountIndex(senderIndex);
+        var recieverAddress = AccountService.GetAccountIndex(recieverIndex);
+        var transfer = new TransactionBank (senderAddress, recieverAddress, transferAmount);
+        transfer.Transfer(senderAddress, recieverAddress, transferAmount);
+        confirmMessage = "Transfer successful";
     }
 }
