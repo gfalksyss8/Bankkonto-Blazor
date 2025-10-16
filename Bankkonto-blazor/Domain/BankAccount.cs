@@ -36,12 +36,12 @@ public class BankAccount : IBankAccount
 
     public void Deposit(decimal amount)
     {
-        Balance += amount;
+        Balance = decimal.Round(Balance += amount, 2);
     }
 
     public void Withdraw(decimal amount)
     {
-        Balance -= amount;
+        Balance = decimal.Round(Balance -= amount, 2);
     }
     
 }

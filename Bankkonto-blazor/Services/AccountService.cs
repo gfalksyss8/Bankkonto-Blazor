@@ -32,6 +32,13 @@ public class AccountService : IAccountService
         return account;
     }
 
+    public async void RemoveAccount (int index)
+    {
+        await IsInitialized();
+        _accounts.RemoveAt(index);
+        await SaveAsync();
+    }
+
     // return list of accounts
     public async Task<List<IBankAccount>> GetAccounts()
     {
