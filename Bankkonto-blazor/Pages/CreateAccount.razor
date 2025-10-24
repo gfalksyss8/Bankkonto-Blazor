@@ -43,7 +43,7 @@
 <br />
 <hr />
 @foreach (var account in _accounts) {
-    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
+    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType - Account created: @account.LastUpdated<br /></list>
 }
 
 @code {

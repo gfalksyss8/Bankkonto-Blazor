@@ -1,28 +1,40 @@
 using System.Net;
+using System.Runtime;
 
 namespace Bankkonto_blazor.Domain;
 
-public class TransactionBank : ITransaction
+public class TransactionBank
 {
     // Constructor
-    private IBankAccount SenderAccount { get; }
-    private IBankAccount RecieverAccount { get; }
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string SenderAccountName { get; }
+    public Guid SenderAccountId { get; }
+    public string RecieverAccountName { get; }
+    public Guid RecieverAccountId { get; }
     public decimal Amount { get; private set; }
+    public decimal BalanceAfter { get; } 
+    public TransactionType TransactionType { get; private set; }
     public DateTime LastUpdated { get; private set; }
-    IBankAccount ITransaction.SenderAccount => SenderAccount;
-    IBankAccount ITransaction.RecieverAccount => RecieverAccount;
 
     // Constructor set
-    public TransactionBank(IBankAccount senderAccount, IBankAccount recieverAccount, decimal amount)
+    public TransactionBank(IBankAccount senderAccount, IBankAccount recieverAccount, decimal amount, TransactionType transactionType)
     {
-        SenderAccount = senderAccount;
-        RecieverAccount = recieverAccount;
+        SenderAccountName = senderAccount.Name;
+        SenderAccountId = senderAccount.Id;
+        RecieverAccountName = recieverAccount.Name;
+        RecieverAccountId = recieverAccount.Id;
         Amount = amount;
+        TransactionType = transactionType;
         LastUpdated = DateTime.Now;
+        /*
+        BalanceAfter = (this.TransactionType == TransactionType.TransferTo)
+            ? senderAccount.Balance - Amount
+            : senderAccount.Balance + Amount;
+        */
     }
 
     // Currency converter, currencies pegged to 1 SEK
-    public Dictionary<string, decimal> ConversionRates = new Dictionary<string, decimal>
+    public static Dictionary<string, decimal> ConversionRates = new Dictionary<string, decimal>
     {
         ["SEK"] = 1,
         ["USD"] = 10.5m,
@@ -31,15 +43,8 @@ public class TransactionBank : ITransaction
         ["JPY"] = 0.075m
     };
 
-    // Withdraws amount from sender, deposits amount*sender rate / reciever rate to reciever
-    public void Transfer(IBankAccount senderAccount, IBankAccount recieverAccount, decimal amount)
-    {
-        senderAccount.Withdraw(amount);
-        //recieverAccount.Deposit(amount);
-        recieverAccount.Deposit(amount * CurrencyConverter(senderAccount) / CurrencyConverter(recieverAccount));
-    }
     // Returns value of dictionary if currency matches key in ConversionRates dictionary, else throws exception
-    public decimal CurrencyConverter(IBankAccount account)
+    public static decimal CurrencyConverter(IBankAccount account)
     {
         foreach (var rates in ConversionRates)
         {
@@ -50,4 +55,5 @@ public class TransactionBank : ITransaction
         }
         throw new Exception("Currency not supported");
     }
+    
 }

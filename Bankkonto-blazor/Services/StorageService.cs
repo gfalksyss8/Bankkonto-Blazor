@@ -33,17 +33,7 @@ public class StorageService : IStorageService
         }
         catch
         {
-            throw new Exception("temp error 124");
+            throw new Exception("Failed to deserialize item from localStorage. //ERROR IN STORAGE SERVICE");
         }
-        /*
-        try
-        {
-            return JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
-        }
-        catch
-        {
-            throw new Exception("Failed to deserialize item from localStorage. temp error 123");
-        }
-        */
     }
 }

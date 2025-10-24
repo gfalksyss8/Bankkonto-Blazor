@@ -16,32 +16,36 @@
     </InputSelect>
 </div>
 <br />
+
 @if (chosenAccountIndex != -1) {
     <div className="mb-2">
         <label>Remove account @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
         <button onclick="@RemoveAccountMethod">Remove account</button>
     </div>
-
+}
     <br /> <hr />
-    @foreach (var account in _accounts) {
-        <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
-    }
+<!-- LIST ALL ACCOUNTS -->
+@foreach (var account in _accounts) {
+    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
 }
 
-        <!-- Local warning & confirm message incase of misinput, clear after every successful method call or input from user -->
-        <!--
-        @if (warningMessage != string.Empty) {
-            <p style="color: red">@warningMessage</p>
-        }
-        @if (confirmMessage != string.Empty) {
-            <p style="color: green">@confirmMessage</p>
-        }
-        -->
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <p style="color: red">@warningMessage</p>
+}
+@if (confirmMessage != string.Empty) {
+    <p style="color: green">@confirmMessage</p>
+}
+
 @code {
     // Declare variables
     int chosenAccountIndex = -1;
     string warningMessage = string.Empty;
     string confirmMessage = string.Empty;
+    void clearWarning() {
+        warningMessage = string.Empty;
+        confirmMessage = string.Empty;
+    }
 
     // Create new list _accounts, set using GetAccounts() method
     private List<IBankAccount> _accounts = new();
@@ -49,7 +53,9 @@
         _accounts = await AccountService.GetAccounts();
     }
     
-    void RemoveAccountMethod() {
-        AccountService.RemoveAccount(chosenAccountIndex);
+    private async Task RemoveAccountMethod() {
+        await AccountService.RemoveAccount(chosenAccountIndex);
+        _accounts = await AccountService.GetAccounts();
+        chosenAccountIndex = -1;
     }
 }

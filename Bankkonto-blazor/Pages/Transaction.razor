@@ -6,6 +6,7 @@
 <h3>Transaction</h3>
 <h4>Transfer balance between accounts</h4>
 
+<!-- Bank account selector, binds account index to senderIndex -->
 <div className="mb-2">
     <label>Choose account to send balance</label>
     <InputSelect @bind-Value="senderIndex">
@@ -16,6 +17,7 @@
     </InputSelect>
 </div>
 
+<!-- Bank account selector, binds account index to recieverIndex -->
 <div className="mb-2">
     <label>Choose account to recieve balance</label>
     <InputSelect @bind-Value="recieverIndex">
@@ -32,24 +34,29 @@
         <p style="color: orange">Warning: You are about to transfer between different currencies, the amount will be converted using set exchange rates</p>
     }
     <br />
+
     <p>Money in account @AccountService.GetAccountIndex(senderIndex).Name: @AccountService.GetAccountIndex(senderIndex).Balance @AccountService.GetAccountIndex(senderIndex).Currency</p>
 
+    @if (senderIndex == recieverIndex) { // Dont show transfer balance button if chosen accounts are the same
+        <p style="color: red">Sender and reciever cannot be the same account</p>
+    }
+    else { // Show transfer balance button
     <div className="mb-2">
         <label>Amount to transfer to @AccountService.GetAccountIndex(recieverIndex).Name</label>
         <InputNumber @bind-Value="transferAmount"></InputNumber>
-        <button @onclick="transferMethod">Transfer Balance</button>
+        <button @onclick="TransferModel">Transfer Balance</button>
     </div>
     <br/>
-
-    // Local warning & confirm message incase of misinput, clear after every successful method call or input from user
-    @if (warningMessage != string.Empty) {
-        <p style="color: red">@warningMessage</p>
-    }
-    @if (confirmMessage != string.Empty) {
-        <p style="color: green">@confirmMessage</p>
     }
 
 }
+<!-- Local warning & confirm message incase of misinput, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <p style="color: red">@warningMessage</p>
+}
+@if (confirmMessage != string.Empty) {
+    <p style="color: green">@confirmMessage</p>
+    }
 
 @code {
     int senderIndex = -1;
@@ -64,11 +71,14 @@
         _accounts = await AccountService.GetAccounts();
     }
 
-    void transferMethod() {
-        var senderAddress = AccountService.GetAccountIndex(senderIndex);
-        var recieverAddress = AccountService.GetAccountIndex(recieverIndex);
-        var transfer = new TransactionBank (senderAddress, recieverAddress, transferAmount);
-        transfer.Transfer(senderAddress, recieverAddress, transferAmount);
+    void TransferModel() {
+        /*
+        var senderAccount = AccountService.GetAccountIndex(senderIndex);
+        var recieverAccount = AccountService.GetAccountIndex(recieverIndex);
+        senderAccount.Transfer(recieverAccount, transferAmount);
+        */
+        //AccountService.TransferMethod(AccountService.GetAccountIndex(senderIndex), AccountService.GetAccountIndex(recieverIndex), transferAmount);
+        AccountService.Transfer(senderIndex, recieverIndex, transferAmount);
         confirmMessage = "Transfer successful";
     }
 }

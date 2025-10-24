@@ -1,8 +1,8 @@
 @page "/DepositWithdraw"
 @using Microsoft.VisualBasic
 @inject IAccountService AccountService;
-<h3>Deposit & Withdraw</h3>
 
+<h3>Deposit & Withdraw</h3>
 
 <div className="mb-2">
     <label>Choose your account</label>
@@ -57,34 +57,34 @@
     }
 
     // Deposit & Withdraw methods
-    void WithdrawMethod()
+    private async Task WithdrawMethod()
     {
-        var account = AccountService.GetAccountIndex(chosenAccountIndex);
-        if (account != null) {
+        if (AccountService.GetAccountIndex(chosenAccountIndex) != null) {
             if (withdrawAmount < 0) {
-                warningMessage = "Cannot withdraw an negative amount from your account. To add balance, use the deposit label";
+                warningMessage = "Cannot withdraw a negative amount from your account. To add balance, use the deposit label";
             }
             else if (withdrawAmount > AccountService.GetAccountIndex(chosenAccountIndex).Balance) {
                 warningMessage = "Cannot withdraw more balance than you have in your account.";
             }
             else {
-                account.Withdraw(withdrawAmount);
+                await AccountService.Withdraw(AccountService.GetAccountIndex(chosenAccountIndex), withdrawAmount);
                 clearWarning();
             }
         }
+        _accounts = await AccountService.GetAccounts();
     }
-    void DepositMethod()
+    private async Task DepositMethod()
     {
-        var account = AccountService.GetAccountIndex(chosenAccountIndex);
-        if (account != null) {
+        if (AccountService.GetAccountIndex(chosenAccountIndex) != null) {
             if (depositAmount < 0) {
-                warningMessage = "Cannot deposit an negative amount to your account. To remove balance, use the withdraw label";
+                warningMessage = "Cannot deposit a negative amount to your account. To remove balance, use the withdraw label";
             }
             else {
-                account.Deposit(depositAmount);
+                await AccountService.Deposit(AccountService.GetAccountIndex(chosenAccountIndex), depositAmount);
                 clearWarning();
             }
         }
+        _accounts = await AccountService.GetAccounts();
     }
 
 }

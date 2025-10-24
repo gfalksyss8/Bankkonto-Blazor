@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Bankkonto_blazor.Services;
 
 public class AccountService : IAccountService
@@ -6,7 +8,12 @@ public class AccountService : IAccountService
     private const string StorageKey = "bankkonto-blazor.accounts";
     private readonly List<BankAccount> _accounts = new();
     private readonly IStorageService _storageService;
-    public AccountService(IStorageService storageService) => _storageService = storageService;
+    public AccountService(IStorageService storageService)
+    {
+        _storageService = storageService;
+        Task.Run(IsInitialized);
+    }
+
 
     private bool isLoaded;
     private async Task IsInitialized()
@@ -25,16 +32,14 @@ public class AccountService : IAccountService
     // Create new BankAccount, add to List of all accounts, and return
     public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
-        await IsInitialized();
-        var account = new BankAccount(name, accountType, currency, initialBalance);
+        var account = new BankAccount(name, accountType, currency, initialBalance, transactions: new List<TransactionBank>());
         _accounts.Add(account);
         await SaveAsync();
         return account;
     }
 
-    public async void RemoveAccount (int index)
+    public async Task RemoveAccount(int index)
     {
-        await IsInitialized();
         _accounts.RemoveAt(index);
         await SaveAsync();
     }
@@ -42,10 +47,29 @@ public class AccountService : IAccountService
     // return list of accounts
     public async Task<List<IBankAccount>> GetAccounts()
     {
-        await IsInitialized();
         return _accounts.Cast<IBankAccount>().ToList();
     }
 
     // User input int determines return index from list _accounts
     public IBankAccount GetAccountIndex(int index) => _accounts[index];
+
+    public async Task Withdraw(IBankAccount account, decimal withdrawAmount)
+    {
+        account.Withdraw(withdrawAmount);
+        await SaveAsync();
+    }
+
+    public async Task Deposit(IBankAccount account, decimal depositAmount)
+    {
+        account.Deposit(depositAmount);
+        await SaveAsync();
+    }
+    public async Task Transfer(int senderIndex, int recieverIndex, decimal transferAmount)
+    {
+        var senderAccount = GetAccountIndex(senderIndex);
+        var recieverAccount = GetAccountIndex(recieverIndex);
+        senderAccount.Transfer(recieverAccount, transferAmount);
+        await SaveAsync();
+    }
+
 }
