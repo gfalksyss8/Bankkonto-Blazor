@@ -11,7 +11,8 @@ public class StorageService : IStorageService
     private JsonSerializerOptions _jsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
+        PropertyNameCaseInsensitive = true
     };
 
     public StorageService(IJSRuntime jsRuntime) => _jsRuntime = jsRuntime;
@@ -31,9 +32,10 @@ public class StorageService : IStorageService
                 return default;
             return JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
         }
-        catch
+        catch (Exception exception)
         {
-            throw new Exception("Failed to deserialize item from localStorage. //ERROR IN STORAGE SERVICE");
+            System.Console.WriteLine(exception);
+            throw;
         }
     }
 }

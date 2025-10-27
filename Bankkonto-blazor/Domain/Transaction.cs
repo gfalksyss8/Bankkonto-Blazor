@@ -1,5 +1,6 @@
 using System.Net;
 using System.Runtime;
+using System.Text.Json.Serialization;
 
 namespace Bankkonto_blazor.Domain;
 
@@ -12,12 +13,26 @@ public class TransactionBank
     public string RecieverAccountName { get; }
     public Guid RecieverAccountId { get; }
     public decimal Amount { get; private set; }
-    public decimal BalanceAfter { get; } 
+    public decimal BalanceAfter { get; private set; } 
     public TransactionType TransactionType { get; private set; }
     public DateTime LastUpdated { get; private set; }
 
-    // Constructor set
-    public TransactionBank(IBankAccount senderAccount, IBankAccount recieverAccount, decimal amount, TransactionType transactionType)
+    // Constructor sets
+    [JsonConstructor]
+    public TransactionBank(Guid id, string senderAccountName, Guid senderAccountId, string recieverAccountName, Guid recieverAccountId, decimal amount, decimal balanceAfter, TransactionType transactionType, DateTime lastUpdated)
+    {
+        Id = id;
+        SenderAccountName = senderAccountName;
+        SenderAccountId = senderAccountId;
+        RecieverAccountName = recieverAccountName;
+        RecieverAccountId = recieverAccountId;
+        Amount = amount;
+        BalanceAfter = balanceAfter;
+        TransactionType = transactionType;
+        LastUpdated = lastUpdated;
+    }
+    // Runtime constructor
+    public TransactionBank(BankAccount senderAccount, BankAccount recieverAccount, decimal amount, TransactionType transactionType)
     {
         SenderAccountName = senderAccount.Name;
         SenderAccountId = senderAccount.Id;
@@ -44,7 +59,7 @@ public class TransactionBank
     };
 
     // Returns value of dictionary if currency matches key in ConversionRates dictionary, else throws exception
-    public static decimal CurrencyConverter(IBankAccount account)
+    public static decimal CurrencyConverter(BankAccount account)
     {
         foreach (var rates in ConversionRates)
         {

@@ -51,7 +51,7 @@
     }
 
     // Create new list _accounts, set using GetAccounts() method
-    private List<IBankAccount> _accounts = new();
+    private List<BankAccount> _accounts = new();
     protected override async Task OnInitializedAsync() {
         _accounts = await AccountService.GetAccounts();
     }

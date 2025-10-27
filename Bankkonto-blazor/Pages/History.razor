@@ -1,5 +1,4 @@
 @page "/History"
-@using System.Transactions
 
 @inject IAccountService AccountService;
 
@@ -37,7 +36,7 @@ else
             }
         </button>
     </div>
-    @if (!_selectedAccount.Transactions.Any()) 
+    @if (!_selectedAccount.Transaction.Any()) 
         {
             <p>No transactions found for this account.</p>
         }
@@ -70,7 +69,7 @@ else
         <p>All history:</p>
         <br />
         @foreach (var account in _accounts) {
-            @foreach (var transaction in account.Transactions) {
+            @foreach (var transaction in account.Transaction) {
                 <list>Account: @account.Name - Transaction: @transaction.TransactionType - 
                 Amount: @transaction.Amount @account.Currency - 
                 Date: @transaction.LastUpdated<br />
@@ -81,8 +80,8 @@ else
 
 @code {
     // Create new list _accounts, set using GetAccounts() method
-    private List<IBankAccount> _accounts;
-    private IBankAccount? _selectedAccount;
+    private List<BankAccount> _accounts = new();
+    private BankAccount? _selectedAccount;
     private Guid _selectedAccountId;
     private Guid SelectedAccountId {
         get => _selectedAccountId;
@@ -109,20 +108,17 @@ else
             currentKey = sortKey;
         }
     }
-    protected override void OnInitialized()
-    {
-        _accounts = AccountService.GetAccounts().Result;
 
-        // If there are accounts, set the selected account to the first account in the list
+
+
+    protected override async Task OnInitializedAsync() {
+        await AccountService.EnsureLoadedAsync();
+        _accounts = await AccountService.GetAccounts();
         if (_accounts.Count > 0)
         {
             _selectedAccount = _accounts[0];
             _selectedAccountId = _accounts[0].Id;
         }
-    }
-
-    protected override async Task OnInitializedAsync() {
-        _accounts = await AccountService.GetAccounts();
     }
 
     // Sorting
@@ -132,7 +128,7 @@ else
             return Enumerable.Empty<TransactionBank>();
         }
 
-        var sortedList = _selectedAccount.Transactions.AsEnumerable();
+        var sortedList = _selectedAccount.Transaction.AsEnumerable();
         sortedList = currentKey switch {
             SortKey.Date => isDescending
                 ? sortedList.OrderByDescending(t => t.LastUpdated)

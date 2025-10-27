@@ -8,31 +8,33 @@ public class AccountService : IAccountService
     private const string StorageKey = "bankkonto-blazor.accounts";
     private readonly List<BankAccount> _accounts = new();
     private readonly IStorageService _storageService;
+    private bool isLoaded;
+
     public AccountService(IStorageService storageService)
     {
         _storageService = storageService;
-        Task.Run(IsInitialized);
+    }
+    
+    public async Task EnsureLoadedAsync() 
+    {
+        if(isLoaded) return;
+        await IsInitialized();
     }
 
-
-    private bool isLoaded;
     private async Task IsInitialized()
     {
-        if (!isLoaded)
-        {
-            var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
-            _accounts.Clear();
-            if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
-            isLoaded = true;
-        }
+        var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
+        _accounts.Clear();
+        if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
+        isLoaded = true;
     }
 
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
 
     // Create new BankAccount, add to List of all accounts, and return
-    public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
+    public async Task<BankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
-        var account = new BankAccount(name, accountType, currency, initialBalance, transactions: new List<TransactionBank>());
+        var account = new BankAccount(name, accountType, currency, initialBalance);
         _accounts.Add(account);
         await SaveAsync();
         return account;
@@ -45,21 +47,21 @@ public class AccountService : IAccountService
     }
 
     // return list of accounts
-    public async Task<List<IBankAccount>> GetAccounts()
+    public async Task<List<BankAccount>> GetAccounts()
     {
-        return _accounts.Cast<IBankAccount>().ToList();
+        return _accounts.Cast<BankAccount>().ToList();
     }
 
     // User input int determines return index from list _accounts
-    public IBankAccount GetAccountIndex(int index) => _accounts[index];
+    public BankAccount GetAccountIndex(int index) => _accounts[index];
 
-    public async Task Withdraw(IBankAccount account, decimal withdrawAmount)
+    public async Task Withdraw(BankAccount account, decimal withdrawAmount)
     {
         account.Withdraw(withdrawAmount);
         await SaveAsync();
     }
 
-    public async Task Deposit(IBankAccount account, decimal depositAmount)
+    public async Task Deposit(BankAccount account, decimal depositAmount)
     {
         account.Deposit(depositAmount);
         await SaveAsync();

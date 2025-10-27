@@ -48,7 +48,7 @@
 
 @code {
     private readonly CreateAccountModel _model = new();
-    private List<IBankAccount> _accounts = new();
+    private List<BankAccount> _accounts = new();
 
     protected override async Task OnInitializedAsync() {
         _accounts = await AccountService.GetAccounts();

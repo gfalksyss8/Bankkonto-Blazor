@@ -12,11 +12,10 @@ public class BankAccount : IBankAccount
     public string Currency { get; private set; } = "SEK";
     public decimal Balance { get;  private set; }
     public DateTime LastUpdated { get; private set; }
-    public readonly List<TransactionBank> _transactions = new();
-    public List<TransactionBank> Transactions => _transactions;
+    public List<TransactionBank>? Transaction { get; set; } = new();
 
     // Constructor set
-    public BankAccount(string name, AccountType accountType, string currency, decimal initialBalance, List<TransactionBank>? transactions)
+    public BankAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
         Name = name;
         AccountType = accountType;
@@ -26,7 +25,7 @@ public class BankAccount : IBankAccount
     }
 
     [JsonConstructor]
-    public BankAccount(Guid id, string name, AccountType accountType, string currency, decimal balance, DateTime lastUpdated)
+    public BankAccount(Guid id, string name, AccountType accountType, string currency, decimal balance, DateTime lastUpdated, List<TransactionBank>? transaction)
     {
         Id = id;
         Name = name;
@@ -34,33 +33,30 @@ public class BankAccount : IBankAccount
         Currency = currency;
         Balance = balance;
         LastUpdated = lastUpdated;
+        Transaction = transaction ?? new();
     }
 
     // Unassigned external account for deposits and withdrawals
-    private static readonly BankAccount External = new BankAccount("External", AccountType.Deposit, "SEK", 0, new List<TransactionBank>());
+    private static readonly BankAccount External = new BankAccount("External", AccountType.Deposit, "SEK", 0);
 
     public void Deposit(decimal amount)
     {
         Balance = decimal.Round(Balance += amount, 2);
-        _transactions.Add(new TransactionBank(External, this, amount, TransactionType.Deposit));
+        Transaction.Add(new TransactionBank(External, this, amount, TransactionType.Deposit));
     }
 
     public void Withdraw(decimal amount)
     {
         Balance = decimal.Round(Balance -= amount, 2);
-        _transactions.Add(new TransactionBank(this, External, amount, TransactionType.Withdraw));
+        Transaction.Add(new TransactionBank(this, External, amount, TransactionType.Withdraw));
     }
 
     // Transfer methods
-    public void Transfer(IBankAccount recieverAccount, decimal amount)
+    public void Transfer(BankAccount recieverAccount, decimal amount)
     {
         Balance = decimal.Round(Balance -= amount, 2);
-        _transactions.Add(new TransactionBank(this, recieverAccount, amount, TransactionType.TransferFrom));
-        recieverAccount.TransferTo(this, amount);
+        Transaction.Add(new TransactionBank(this, recieverAccount, amount, TransactionType.TransferFrom));
+        recieverAccount.Balance = decimal.Round(recieverAccount.Balance += amount * TransactionBank.CurrencyConverter(this) / TransactionBank.CurrencyConverter(recieverAccount), 2);
+        recieverAccount.Transaction.Add(new TransactionBank(this, recieverAccount, amount, TransactionType.TransferTo));
     }
-    public void TransferTo(IBankAccount senderAccount, decimal amount)
-    {
-        Balance = decimal.Round(Balance += amount * TransactionBank.CurrencyConverter(senderAccount) / TransactionBank.CurrencyConverter(this), 2);
-        _transactions.Add(new TransactionBank(senderAccount, this, amount, TransactionType.TransferTo));
-        }
 }
