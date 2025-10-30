@@ -41,11 +41,14 @@ public class TransactionBank
         Amount = amount;
         TransactionType = transactionType;
         LastUpdated = DateTime.Now;
-        /*
-        BalanceAfter = (this.TransactionType == TransactionType.TransferTo)
-            ? senderAccount.Balance - Amount
-            : senderAccount.Balance + Amount;
-        */
+        BalanceAfter = transactionType switch
+        {
+            TransactionType.Deposit => recieverAccount.Balance,
+            TransactionType.Withdraw => senderAccount.Balance,
+            TransactionType.TransferFrom => senderAccount.Balance,
+            TransactionType.TransferTo => recieverAccount.Balance,
+            _ => 0
+        };
     }
 
     // Currency converter, currencies pegged to 1 SEK

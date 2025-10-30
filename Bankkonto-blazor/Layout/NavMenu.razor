@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject IAccountService AccountService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Bankkonto-blazor</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,43 +9,45 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <hr />
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="CreateAccount">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create a new account
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="ManageAccounts">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Accounts
-            </NavLink>
-        </div>
-        <hr />
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="DepositWithdraw">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Deposit & Withdraw
-            </NavLink>
-        </div>
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Transaction">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="History">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> History
-            </NavLink>
-        </div>
-    </nav>
-</div>
+@if (AccountService.IsAuthorized()) {
+    <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+            <hr />
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="CreateAccount">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create a new account
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="ManageAccounts">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Accounts
+                </NavLink>
+            </div>
+            <hr />
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="DepositWithdraw">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Deposit & Withdraw
+                </NavLink>
+            </div>
+            
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Transaction">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="History">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> History
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+}
 
 @code {
     private bool collapseNavMenu = true;
@@ -53,5 +57,14 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    protected override void OnInitialized()
+    {
+        AccountService.OnAuthStateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        AccountService.OnAuthStateChanged -= StateHasChanged;
     }
 }

@@ -1,14 +1,26 @@
 @page "/ManageAccounts"
 @inject IAccountService AccountService;
 
-<h3>Manage Accounts</h3>
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
 
-<p>Choose an account to manage:</p> 
+<h2>Manage Accounts</h2>
+<hr />
 <br />
+
+<h4>Choose an account to manage:</h4> <span class="badge bg-primary">@_accounts.Count</span>
 <!-- Binds chosen account index to chosenAccountIndex, default -1 (no account chosen) -->
 <div className="mb-2">
-    <label>Choose your account</label>
-    <InputSelect @bind-Value="chosenAccountIndex">
+    <InputSelect class="form-select" @bind-Value="chosenAccountIndex">
         <option value="-1">Choose your account</option>
         @foreach (var account in _accounts) {
             <option value="@_accounts.IndexOf(account)">@account.Name</option>
@@ -18,23 +30,38 @@
 <br />
 
 @if (chosenAccountIndex != -1) {
-    <div className="mb-2">
-        <label>Remove account @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
-        <button onclick="@RemoveAccountMethod">Remove account</button>
-    </div>
+    <h5>@AccountService.GetAccountIndex(chosenAccountIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).Id</i></small></h5>
+    <h5>Balance: @AccountService.GetAccountIndex(chosenAccountIndex).Balance @AccountService.GetAccountIndex(chosenAccountIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).AccountType Account, Created: @AccountService.GetAccountIndex(chosenAccountIndex).LastUpdated</i></small></h5>
+    <div class="btn-group">
+        <button type="button" class="btn btn-primary disabled">Edit Account</button>
+        <button type="button" class="btn btn-danger" @onclick="() => RemoveAccountMethod()">Remove Account</button>
+    </div> 
+    <br />
 }
-    <br /> <hr />
+
+<hr /><br/>
+<h4>Change login password</h4>
+<form>
+    <div class="input-group">
+        <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+        <input type="password" class="form-control" placeholder="Current password" @bind-value="oldPassword">
+    </div>
+    <div class="input-group"
+        <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+        <input type="password" class="form-control" placeholder="New password" @bind-value="newPassword">
+    </div>
+    <br />
+    <div>
+        <button type="button" class="btn btn-success 
+        @(oldPassword != string.Empty && newPassword != string.Empty ? "active" : "disabled")"
+        @onclick="() => passwordChangeMethod()">Change password</button>
+    </div>
+</form>
+<br /> <hr />
+
 <!-- LIST ALL ACCOUNTS -->
 @foreach (var account in _accounts) {
     <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType<br /></list>
-}
-
-<!-- Local warning & confirm message, clear after every successful method call or input from user -->
-@if (warningMessage != string.Empty) {
-    <p style="color: red">@warningMessage</p>
-}
-@if (confirmMessage != string.Empty) {
-    <p style="color: green">@confirmMessage</p>
 }
 
 @code {
@@ -46,6 +73,8 @@
         warningMessage = string.Empty;
         confirmMessage = string.Empty;
     }
+    string oldPassword = string.Empty;
+    string newPassword = string.Empty;
 
     // Create new list _accounts, set using GetAccounts() method
     private List<BankAccount> _accounts = new();
@@ -54,8 +83,27 @@
     }
     
     private async Task RemoveAccountMethod() {
-        await AccountService.RemoveAccount(chosenAccountIndex);
-        _accounts = await AccountService.GetAccounts();
-        chosenAccountIndex = -1;
+        try {
+            clearWarning();
+            confirmMessage = $"Account " + AccountService.GetAccountIndex(chosenAccountIndex).Name + " removed";
+            await AccountService.RemoveAccount(chosenAccountIndex);
+            chosenAccountIndex = -1;
+            _accounts = await AccountService.GetAccounts();
+        }
+        catch {
+            warningMessage = "Account could not be removed";
+        }
+    }
+
+    void passwordChangeMethod() {
+        if (oldPassword == AccountService.GetPassword()) {
+            AccountService.SetPassword(newPassword);
+            clearWarning();
+            confirmMessage = "Password successfully changed";
+        }
+        else {
+            clearWarning();
+            warningMessage = "Current password is incorrect";
+        }
     }
 }

@@ -1,4 +1,5 @@
 @page "/History"
+@using System.Security.Authentication.ExtendedProtection
 
 @inject IAccountService AccountService;
 
@@ -58,7 +59,14 @@ else
                         <td>@transaction.Amount @(_selectedAccount.Currency)</td>
                         <td>@transaction.TransactionType</td>
                         <td>@transaction.BalanceAfter @(_selectedAccount.Currency)</td>
-                        <td>From: @transaction.SenderAccountId.ToString()[..6] To: @transaction.RecieverAccountId.ToString()[..6]</td>
+                        <td>From: @transaction.SenderAccountId.ToString()[..6] To: 
+                        @if (transaction.RecieverAccountName == "External") {
+                                @transaction.RecieverAccountName
+                            }
+                            else {
+                            @transaction.RecieverAccountId.ToString()[..6]
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -79,7 +87,7 @@ else
 }
 
 @code {
-    // Create new list _accounts, set using GetAccounts() method
+    // Page properties and fields
     private List<BankAccount> _accounts = new();
     private BankAccount? _selectedAccount;
     private Guid _selectedAccountId;
@@ -109,8 +117,7 @@ else
         }
     }
 
-
-
+    // Initialize _accounts loading from local storage
     protected override async Task OnInitializedAsync() {
         await AccountService.EnsureLoadedAsync();
         _accounts = await AccountService.GetAccounts();

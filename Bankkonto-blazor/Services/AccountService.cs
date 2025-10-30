@@ -1,14 +1,19 @@
+using System.ComponentModel;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace Bankkonto_blazor.Services;
 
 public class AccountService : IAccountService
 {
-    // List of all accounts
+    // Fields
     private const string StorageKey = "bankkonto-blazor.accounts";
+    private const string PassKey = "bankkonto-blazor.password";
     private readonly List<BankAccount> _accounts = new();
     private readonly IStorageService _storageService;
     private bool isLoaded;
+    private string _password = "admin";
+    public bool Authorized { get; private set; }
 
     public AccountService(IStorageService storageService)
     {
@@ -24,12 +29,51 @@ public class AccountService : IAccountService
     private async Task IsInitialized()
     {
         var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
+        string fromStoragePass = await _storageService.GetItemAsync<string>(PassKey);
         _accounts.Clear();
         if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
+        if (fromStoragePass != string.Empty) { _password = fromStoragePass; }
         isLoaded = true;
     }
 
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
+    private async Task SaveAsyncPassword() => await _storageService.SetItemAsync(PassKey, _password);
+
+    // Password authorization
+    public event Action OnAuthStateChanged;
+    public bool TryAuthorize(string password)
+    {
+        if (Authorized == false)
+        {
+            if (password == _password)
+            {
+                Authorized = true;
+                NotifyAuthStateChanged();
+                return Authorized;
+            }
+            return Authorized;
+        }
+        else
+        {
+            return Authorized;
+        }
+    }
+    public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
+    public bool IsAuthorized()
+    {
+        return Authorized;
+    }
+
+    // Get & set password methods
+    public string GetPassword()
+    {
+        return _password;
+    }
+    public async Task SetPassword(string newPassword)
+    {
+        _password = newPassword;
+        await SaveAsyncPassword();
+    }
 
     // Create new BankAccount, add to List of all accounts, and return
     public async Task<BankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)

@@ -2,41 +2,54 @@
 @using Microsoft.VisualBasic
 @inject IAccountService AccountService;
 
-<h3>Deposit & Withdraw</h3>
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
 
+<h2>Deposit & Withdraw</h2>
+<hr />
+<br />
+
+<h4>Choose an account</h4> <span class="badge bg-primary">@_accounts.Count</span>
+<!-- Binds chosen account index to chosenAccountIndex, default -1 (no account chosen) -->
 <div className="mb-2">
-    <label>Choose your account</label>
-    <InputSelect @bind-Value="chosenAccountIndex">
-        <option value="-1">Choose your account</option>
+    <InputSelect class="form-select" @bind-Value="chosenAccountIndex">
+        <option value="-1">Accounts...</option>
         @foreach (var account in _accounts) {
             <option value="@_accounts.IndexOf(account)">@account.Name</option>
         }
     </InputSelect>
 </div>
+<br />
 
 <!-- Show withdraw and deposit input only after picking a valid account -->
 @if (chosenAccountIndex != -1) {
+    <h5>@AccountService.GetAccountIndex(chosenAccountIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).Id</i></small></h5>
+    <h5>Balance: @AccountService.GetAccountIndex(chosenAccountIndex).Balance @AccountService.GetAccountIndex(chosenAccountIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).AccountType Account, Created: @AccountService.GetAccountIndex(chosenAccountIndex).LastUpdated</i></small></h5>
     <br />
-    <p>Money in account: @AccountService.GetAccountIndex(chosenAccountIndex).Balance @AccountService.GetAccountIndex(chosenAccountIndex).Currency</p>
 
+    <label>Enter amount to withdraw from @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
     <div className="mb-2">
-        <label>Withdraw amount from @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
-        <InputNumber @bind-Value="withdrawAmount"></InputNumber>
-        <button onclick="@WithdrawMethod">Withdraw amount from account</button>
+        <InputNumber class="form-control" placeholder="Withdraw from..." @bind-Value="withdrawAmount"></InputNumber>
+        <button type="button" class="btn btn-primary" data-bs-toggle="tooltip" title="Withdraw balance" onclick="@WithdrawMethod">Withdraw balance from account</button>
     </div>
 
     <br />
+    <label>Enter amount to deposit to @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
     <div className="mb-2">
-        <label>Deposit amount to @AccountService.GetAccountIndex(chosenAccountIndex).Name</label>
-        <InputNumber @bind-Value="depositAmount"></InputNumber>
-        <button @onclick="DepositMethod">Deposit amount to account</button>
+        <InputNumber class="form-control" placeholder="Deposit to..." @bind-Value="depositAmount"></InputNumber>
+        <button type="button" class="btn btn-primary" data-bs-toggle="tooltip" title="Deposit balance" @onclick="DepositMethod">Deposit balance to account</button>
     </div>
     <br/>
 
-    // Local warning message incase of misinput, clear after every successful method call or input from user
-    @if (warningMessage != string.Empty) {
-        <p style="color: red">@warningMessage</p>
-    }
 }
 
 
@@ -46,8 +59,10 @@
     decimal withdrawAmount = 0;
     decimal depositAmount = 0;
     string warningMessage = string.Empty;
+    string confirmMessage = string.Empty;
     void clearWarning() {
         warningMessage = string.Empty;
+        confirmMessage = string.Empty;
     }
 
     // Create new list _accounts, set using GetAccounts() method

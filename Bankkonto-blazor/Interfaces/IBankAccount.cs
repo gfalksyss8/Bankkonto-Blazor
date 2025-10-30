@@ -11,8 +11,10 @@ public interface IBankAccount
     decimal Balance { get; }
     DateTime LastUpdated { get; }
     List<TransactionBank>? Transaction { get; }
+    decimal InterestRate { get; }
 
     void Withdraw(decimal amount);
     void Deposit(decimal amount);
     void Transfer(BankAccount recieverAccount, decimal amount);
+    void DepositInterest();
 }
