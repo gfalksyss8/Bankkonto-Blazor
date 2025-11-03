@@ -5,11 +5,18 @@ namespace Bankkonto_blazor.Interfaces;
 public interface IBankAccount
 {
     Guid Id { get; }
+    AccountType AccountType { get; }
     string Name { get; }
     string Currency { get; }
     decimal Balance { get; }
     DateTime LastUpdated { get; }
+    List<TransactionBank>? Transaction { get; }
+    decimal PendingInterest { get; }
+    DateTime InterestDate { get; }
+    DateTime DepositInterestCountdown{ get; }
 
     void Withdraw(decimal amount);
     void Deposit(decimal amount);
+    void Transfer(BankAccount recieverAccount, decimal amount);
+    void DepositInterest();
 }

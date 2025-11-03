@@ -1,0 +1,106 @@
+@page "/Transaction"
+@using Microsoft.AspNetCore.Authorization.Infrastructure
+@inject IAccountService AccountService;
+
+<PageTitle>Transactions</PageTitle>
+
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
+
+<h2>Transaction</h2>
+<h4>Transfer balance between accounts</h4>
+<hr />
+<br />
+
+<!-- Bank account selector, binds account index to senderIndex -->
+<h4><span class="badge bg-primary">@_accounts.Count</span> Choose account to send balance from <img src="/icons/arrow_right_icon.png" alt="→" class="rounded-circle" style="width:18px;height:18px;"/></h4>
+<div class="mb-2">
+    <InputSelect class="form-select" @bind-Value="senderIndex">
+        <option value="-1">Select a sender</option>
+        @foreach (var account in _accounts) {
+            <option value="@_accounts.IndexOf(account)">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+<br />
+
+<!-- Bank account selector, binds account index to recieverIndex -->
+<h4><span class="badge bg-primary">@_accounts.Count</span> Choose account to recieve the balance <img src="/icons/arrow_left_icon.png" alt="←" class="rounded-circle" style="width:18px;height:18px;"/></h4>
+<div class="mb-2">
+    <InputSelect class="form-select" @bind-Value="recieverIndex">
+        <option value="-1">Select a reciever</option>
+        @foreach (var account in _accounts) {
+            <option value="@_accounts.IndexOf(account)">@account.Name</option>
+        }
+    </InputSelect>
+</div>
+
+@if (senderIndex != -1 && recieverIndex != -1) {
+
+    @if (AccountService.GetAccountIndex(senderIndex).Currency != AccountService.GetAccountIndex(recieverIndex).Currency) {
+        <div class="alert alert-warning fade show">
+            <i>Warning: You are about to transfer between different currencies, the amount will be converted using <abbr title="@AccountService.GetAccountIndex(senderIndex).Currency → @AccountService.GetAccountIndex(recieverIndex).Currency">set exchange rates</abbr></i>
+        </div>
+    }
+    <br />
+
+    <h5>@AccountService.GetAccountIndex(senderIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).Id</i></small></h5>
+    <h5>Balance: @AccountService.GetAccountIndex(senderIndex).Balance @AccountService.GetAccountIndex(senderIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).AccountType Account, Created: @AccountService.GetAccountIndex(senderIndex).LastUpdated</i></small></h5>
+    <br />
+
+    @if (senderIndex == recieverIndex) { // Dont show transfer balance button if chosen accounts are the same
+        <div class="alert alert-danger fade show">
+            <b>Sender and reciever cannot be the same account</b>
+        </div>
+    }
+    else { // Show transfer balance button
+    <label>Amount to transfer to @AccountService.GetAccountIndex(recieverIndex).Name</label>
+    <div class="mb-2">
+        <InputNumber class="form-control" placeholder="Amount to transfer..." @bind-Value="transferAmount"></InputNumber>
+        <button type="button" class="btn btn-primary" @onclick="TransferModel">Transfer Balance</button>
+    </div>
+    <br/>
+    }
+
+}
+
+@code {
+    int senderIndex = -1;
+    int recieverIndex = -1;
+    decimal transferAmount = 0;
+    string warningMessage = string.Empty;
+    string confirmMessage = string.Empty;
+
+    // Create new list _accounts, set using GetAccounts() method
+    private List<BankAccount> _accounts = new();
+    protected override async Task OnInitializedAsync() {
+        await AccountService.EnsureLoadedAsync();
+        _accounts = await AccountService.GetAccounts();
+    }
+
+    void TransferModel() {
+        if (AccountService.GetAccountIndex(senderIndex) != null) {
+            if (AccountService.GetAccountIndex(senderIndex).Balance < transferAmount) {
+                warningMessage = "Transfer amount cannot exceed balance in account";
+            }
+            else if (transferAmount <= 0) {
+                warningMessage = "Cannot transfer an amount of zero or less";
+            }
+            else {
+                AccountService.Transfer(senderIndex, recieverIndex, transferAmount);
+                confirmMessage = "Transfer successful";
+                warningMessage = string.Empty;
+            }
+        }
+    }
+
+}

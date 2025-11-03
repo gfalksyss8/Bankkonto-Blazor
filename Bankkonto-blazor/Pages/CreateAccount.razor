@@ -1,0 +1,143 @@
+@page "/CreateAccount"
+@using System.Runtime.CompilerServices
+@inject IAccountService AccountService;
+
+<PageTitle>Create a new account</PageTitle>
+
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
+
+<h2>Create a new account</h2>
+<hr />
+<br />
+
+<EditForm Model="_model" OnValidSubmit="@CreateAccountAsync">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <b>Account name </b>
+    @if (string.IsNullOrWhiteSpace(_model.Name)) 
+    {
+        <span class="badge bg-warning">Required</span>
+    }
+    <div class="input-group">
+        <span class="input-group-text">
+                <img src="/icons/circle_user_icon.png" alt="User" class="rounded-circle" style="width:18px;height:18px;"/>
+            </span>
+        <InputText class="form-control" placeholder="Account name" @bind-Value="_model.Name"/>
+    </div>
+<br />
+    <b>Account type</b>
+    <div class="input-group">
+        <span class="input-group-text">
+                <img src="/icons/bank_cards_icon.png" alt="Type" class="rounded-circle" style="width:18px;height:18px;"/>
+            </span>
+        <InputSelect class="form-select" @bind-Value="_model.AccountType">
+            <option value="">Choose an account type</option>
+            <option value="@AccountType.Deposit">Deposit account</option>
+            <option value="@AccountType.Savings">Savings account</option>
+        </InputSelect>
+    </div>
+<br />
+    <b>Currency </b>
+    @if (string.IsNullOrWhiteSpace(_model.Currency)) 
+    {
+        <span class="badge bg-warning">Required</span>
+    }
+    <div class="input-group">
+        <span class="input-group-text">
+                <img src="/icons/money_icon.png" alt="$" class="rounded-circle" style="width:18px;height:18px;"/>
+            </span>
+        <InputSelect class="form-select" @bind-Value="_model.Currency">
+        <option value="">Choose a currency</option>
+            <option value="SEK">Swedish Krona (SEK)</option>
+            <option value="USD">US Dollar (USD)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="GBP">British Pound (GBP)</option>
+            <option value="JPY">Japanese Yen (JPY)</option>
+        </InputSelect>
+    </div>
+<br />
+    <b>Initial amount </b>
+    @if (_model.InitialBalance < 1) 
+    {
+        <span class="badge bg-warning">Required</span>
+    }
+    <div class="input-group">
+        <span class="input-group-text">
+                <img src="/icons/piggy_bank_icon.png" alt="Amount" class="rounded-circle" style="width:18px;height:18px;"/>
+            </span>
+        <InputNumber class="form-control" placeholder="Initial amount" @bind-Value="_model.InitialBalance"></InputNumber>
+    </div>
+<br />
+    <button type="submit" 
+            class="btn btn-success @( !string.IsNullOrWhiteSpace(_model.Name) && _model.InitialBalance > 0 ? "active" : "disabled")">
+        Finish creating account
+    </button>
+    </EditForm>
+
+<br />
+<hr />
+@foreach (var account in _accounts) {
+    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType - Account created: @account.LastUpdated<br /></list>
+}
+
+@code {
+    // Declare variables
+    string warningMessage = string.Empty;
+    string confirmMessage = string.Empty;
+    void clearWarning() {
+        warningMessage = string.Empty;
+        confirmMessage = string.Empty;
+    }
+    private readonly CreateAccountModel _model = new();
+    private List<BankAccount> _accounts = new();
+
+    protected override async Task OnInitializedAsync() {
+        _accounts = await AccountService.GetAccounts();
+    }
+
+    private async Task CreateAccountAsync() {
+        try 
+        {
+            await AccountService.CreateAccount(
+                _model.Name,
+                _model.AccountType,
+                _model.Currency,
+                _model.InitialBalance);
+
+            clearWarning();
+            confirmMessage = "Account created successfully";
+            _accounts = await AccountService.GetAccounts();
+            _model.Clear();
+            StateHasChanged();
+        }
+        catch (Exception exception) 
+        {
+            Console.WriteLine(exception);
+            throw;
+        }
+    }
+
+    private class CreateAccountModel {
+        public string? Name {get;set;}
+        public AccountType AccountType {get;set;}
+        public string? Currency {get;set;}
+        public decimal InitialBalance {get;set;} = 0;
+
+        public void Clear() {
+            Name=string.Empty;
+            AccountType = AccountType.Deposit;
+            Currency = "SEK";
+            InitialBalance = 0;
+        }
+    }
+}

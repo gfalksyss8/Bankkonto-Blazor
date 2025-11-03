@@ -1,0 +1,162 @@
+@page "/History"
+@using System.Security.Authentication.ExtendedProtection
+@inject IAccountService AccountService;
+
+<PageTitle>History</PageTitle>
+
+<h3>History & Timestamps</h3>
+@if (_accounts.Count == 0) { <p>No accounts found!</p> }
+else 
+{
+    <div class="mb-2">
+        <label>Välj konto</label>
+        <InputSelect TValue="Guid"
+                    class="form-select"
+                    id="accountSelect"
+                    @bind-Value="SelectedAccountId">
+            @foreach (var account in _accounts) {
+                <option value="@account.Id">@account.Name - Amount: @account.Balance @account.Currency</option>
+            }
+        </InputSelect>
+    </div>
+    
+    <div class="mb-2 btn-group">
+        <button type="button" class="btn btn-sm
+        @( currentKey==SortKey.Date ? "btn-primary" : "btn-outline-primary")
+        " @onclick="() => SetSort(SortKey.Date)">
+            @if (isDescending) {
+                <p>▼ Date</p>
+            }
+            else {
+                <p>▲ Date</p>
+            }
+        </button>
+        <button type="button" class="btn btn-sm
+        @( currentKey==SortKey.Amount ? "btn-primary" : "btn-outline-primary")
+        " @onclick="() => SetSort(SortKey.Amount)">
+            @if (isDescending) {
+                <p>▼ Amount</p>
+            }
+            else {
+                <p>▲ Amount</p>
+            }
+        </button>
+    </div>
+    @if (!_selectedAccount.Transaction.Any()) 
+        {
+            <p>No transactions found for this account.</p>
+        }
+    else {
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Transfer type</th>
+                    <th>Total balance after transfer</th>
+                    <th>Sent from/to account</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transaction in sortedTransaction()) {
+                    <tr>
+                        <td>@transaction.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@decimal.Round(transaction.Amount, 2) @(_selectedAccount.Currency)</td>
+                        <td>@transaction.TransactionType</td>
+                        <td>@transaction.BalanceAfter @(_selectedAccount.Currency)</td>
+                        <td>
+                        From: @if (transaction.SenderAccountName == "External") {
+                                @transaction.SenderAccountName
+                            }
+                            else {
+                            @transaction.SenderAccountId.ToString()[..6]
+                            }
+                        To: @if (transaction.RecieverAccountName == "External") {
+                                @transaction.RecieverAccountName
+                            }
+                            else {
+                            @transaction.RecieverAccountId.ToString()[..6]
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+        <br /> 
+        <hr />
+        <p>All history:</p>
+        <br />
+        @foreach (var account in _accounts) {
+            @foreach (var transaction in account.Transaction) {
+                <list>Account: @account.Name - Transaction: @transaction.TransactionType - 
+                Amount: @transaction.Amount @account.Currency - 
+                Date: @transaction.LastUpdated<br />
+                </list>
+            }
+        }
+}
+
+@code {
+    // Page properties and fields
+    private List<BankAccount> _accounts = new();
+    private BankAccount? _selectedAccount;
+    private Guid _selectedAccountId;
+    private Guid SelectedAccountId {
+        get => _selectedAccountId;
+        set {
+            if (_selectedAccountId == value) return;
+            _selectedAccountId = value;
+            _selectedAccount = _accounts.FirstOrDefault(account => account.Id == _selectedAccountId);
+        }
+    }
+
+    // Sorting types
+    private SortKey currentKey = SortKey.Date;
+    private bool isDescending = true;
+    private enum SortKey {
+        Date,
+        Amount,
+    }
+    private void SetSort(SortKey sortKey) {
+        if (currentKey == sortKey) {
+            isDescending = !isDescending;
+        }
+        else {
+            isDescending = true;
+            currentKey = sortKey;
+        }
+    }
+
+    // Initialize _accounts loading from local storage
+    protected override async Task OnInitializedAsync() {
+        await AccountService.EnsureLoadedAsync();
+        _accounts = await AccountService.GetAccounts();
+        if (_accounts.Count > 0)
+        {
+            _selectedAccount = _accounts[0];
+            _selectedAccountId = _accounts[0].Id;
+        }
+    }
+
+    // Sorting
+
+    private IEnumerable<TransactionBank> sortedTransaction() {
+        if (_selectedAccount == null) {
+            return Enumerable.Empty<TransactionBank>();
+        }
+
+        var sortedList = _selectedAccount.Transaction.AsEnumerable();
+        sortedList = currentKey switch {
+            SortKey.Date => isDescending
+                ? sortedList.OrderByDescending(t => t.LastUpdated)
+                : sortedList.OrderBy(t => t.LastUpdated),
+            SortKey.Amount => isDescending
+                ? sortedList.OrderByDescending(t => t.Amount)
+                : sortedList.OrderBy(t => t.Amount),
+            _ => sortedList
+        };
+        return sortedList;
+    }
+
+}

@@ -1,23 +1,144 @@
-using Bankkonto_blazor.Domain;
+using System.ComponentModel;
+using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 
 namespace Bankkonto_blazor.Services;
 
 public class AccountService : IAccountService
 {
-    // List of all accounts
-    List<IBankAccount> accounts = new List<IBankAccount>();
+    // Fields
+    private const string StorageKey = "bankkonto-blazor.accounts";
+    private const string PassKey = "bankkonto-blazor.password";
+    private readonly List<BankAccount> _accounts = new();
+    private readonly IStorageService _storageService;
+    private bool isLoaded;
+    private string _password = "admin";
+    public bool Authorized { get; private set; }
 
-    // Create new BankAccount using ID, add to List<IBankAccount> accounts
-    public IBankAccount CreateAccount(string name, string currency, decimal initialBalance)
+    public AccountService(IStorageService storageService)
     {
-        BankAccount Id = new BankAccount(name, currency, initialBalance);
-        accounts.Add(Id);
-        return Id;
+        _storageService = storageService;
+    }
+    
+    public async Task EnsureLoadedAsync() 
+    {
+        if(isLoaded) return;
+        await IsInitialized();
+    }
+
+    private async Task IsInitialized()
+    {
+        var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
+        string fromStoragePass = await _storageService.GetItemAsync<string>(PassKey);
+        _accounts.Clear();
+        if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
+        if (fromStoragePass != string.Empty) { _password = fromStoragePass; }
+        isLoaded = true;
+        await InterestUpdater();
+    }
+
+    private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
+    private async Task SaveAsyncPassword() => await _storageService.SetItemAsync(PassKey, _password);
+
+    // Password authorization
+    public event Action OnAuthStateChanged;
+    public bool TryAuthorize(string password)
+    {
+        if (Authorized == false)
+        {
+            if (password == _password)
+            {
+                Authorized = true;
+                NotifyAuthStateChanged();
+                return Authorized;
+            }
+            return Authorized;
+        }
+        else
+        {
+            return Authorized;
+        }
+    }
+    public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
+    public bool IsAuthorized()
+    {
+        return Authorized;
+    }
+
+    // Get & set password methods
+    public string GetPassword()
+    {
+        return _password;
+    }
+    public async Task SetPassword(string newPassword)
+    {
+        _password = newPassword;
+        await SaveAsyncPassword();
+    }
+
+    // Create new BankAccount, add to List of all accounts, and return
+    public async Task<BankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
+    {
+        var account = new BankAccount(name, accountType, currency, initialBalance);
+        _accounts.Add(account);
+        await SaveAsync();
+        return account;
+    }
+
+    public async Task RemoveAccount(int index)
+    {
+        _accounts.RemoveAt(index);
+        await SaveAsync();
     }
 
     // return list of accounts
-    public List<IBankAccount> GetAccounts()
+    public async Task<List<BankAccount>> GetAccounts()
     {
-        return accounts;
+        return _accounts.Cast<BankAccount>().ToList();
+    }
+
+    // User input int determines return index from list _accounts
+    public BankAccount GetAccountIndex(int index) => _accounts[index];
+
+    public async Task Withdraw(BankAccount account, decimal withdrawAmount)
+    {
+        account.Withdraw(withdrawAmount);
+        await SaveAsync();
+    }
+
+    public async Task Deposit(BankAccount account, decimal depositAmount)
+    {
+        account.Deposit(depositAmount);
+        await SaveAsync();
+    }
+    public async Task Transfer(int senderIndex, int recieverIndex, decimal transferAmount)
+    {
+        var senderAccount = GetAccountIndex(senderIndex);
+        var recieverAccount = GetAccountIndex(recieverIndex);
+        senderAccount.Transfer(recieverAccount, transferAmount);
+        await SaveAsync();
+    }
+    public async Task InterestUpdater()
+    {
+        var _accounts = await GetAccounts();
+        foreach (var account in _accounts)
+        {
+            account.AddInterest();
+            account.DepositInterest();
+        }
+        await SaveAsync();
+    }
+
+    // DEV
+    public async Task DevAddInterest(BankAccount account)
+    {
+        account.DevAddInterest();
+        account.AddInterest();
+        await SaveAsync();
+    }
+    public async Task DevDepositInterest(BankAccount account)
+    {
+        account.DevDepositInterest();
+        await SaveAsync();
     }
 }

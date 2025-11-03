@@ -1,7 +1,91 @@
 ﻿@page "/"
+@inject IAccountService AccountService;
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
 
-Welcome to your new app.
+<h1>Home</h1>
+<br />
+@if (!AccountService.IsAuthorized()) 
+{
+    <div class="form-group">
+    <label for="pwd">Password: <small class="text-muted">Defaults to "admin" if not set</small></label>
+    <input type="password" class="form-control" id="pwd" @bind-value="password"><br />
+    <button type="button" class="btn btn-primary btn" @onclick="() => tryPassword()">Enter</button>
+    </div>
+}
+
+<br />
+@if (AccountService.IsAuthorized()) {
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="CreateAccount">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create Account
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="ManageAccounts">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Accounts
+        </NavLink>
+    </div>
+
+    <br />
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="DepositWithdraw">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Deposit/Withdraw
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="Transaction">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="History">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> History
+        </NavLink>
+    </div>
+}
+
+@code {
+    string password;
+    string warningMessage = string.Empty;
+    string confirmMessage = string.Empty;
+    void clearMessage() {
+        warningMessage = string.Empty;
+        confirmMessage = string.Empty;
+    }
+
+    void tryPassword() {
+        clearMessage();
+        if (password != null) 
+        {
+            AccountService.TryAuthorize(password);
+            if (!AccountService.IsAuthorized()) {
+                warningMessage = "Wrong password!";
+            }
+            else {
+            confirmMessage = "Logged in successfully";
+            }
+        }
+    }
+    
+// Create new list _accounts, set using GetAccounts() method
+private List<BankAccount> _accounts = new();
+protected override async Task OnInitializedAsync() {
+    await AccountService.EnsureLoadedAsync();
+    _accounts = await AccountService.GetAccounts();
+    }
+}
