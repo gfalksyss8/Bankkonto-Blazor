@@ -34,6 +34,7 @@ public class AccountService : IAccountService
         if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
         if (fromStoragePass != string.Empty) { _password = fromStoragePass; }
         isLoaded = true;
+        await InterestUpdater();
     }
 
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
@@ -117,5 +118,27 @@ public class AccountService : IAccountService
         senderAccount.Transfer(recieverAccount, transferAmount);
         await SaveAsync();
     }
+    public async Task InterestUpdater()
+    {
+        var _accounts = await GetAccounts();
+        foreach (var account in _accounts)
+        {
+            account.AddInterest();
+            account.DepositInterest();
+        }
+        await SaveAsync();
+    }
 
+    // DEV
+    public async Task DevAddInterest(BankAccount account)
+    {
+        account.DevAddInterest();
+        account.AddInterest();
+        await SaveAsync();
+    }
+    public async Task DevDepositInterest(BankAccount account)
+    {
+        account.DevDepositInterest();
+        await SaveAsync();
+    }
 }

@@ -2,6 +2,8 @@
 @using Microsoft.VisualBasic
 @inject IAccountService AccountService;
 
+<PageTitle>Deposit & Withdraw</PageTitle>
+
 <!-- Local warning & confirm message, clear after every successful method call or input from user -->
 @if (warningMessage != string.Empty) {
     <div class="alert alert-danger alert-dismissible fade show">

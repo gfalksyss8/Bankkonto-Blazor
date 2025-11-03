@@ -14,7 +14,9 @@ public class BankAccount : IBankAccount
     public decimal Balance { get;  private set; }
     public DateTime LastUpdated { get; private set; }
     public List<TransactionBank>? Transaction { get; set; } = new();
-    public decimal InterestRate { get; private set; } = 0.0m;
+    public decimal PendingInterest { get; private set; }
+    public DateTime InterestDate { get; private set; }
+    public DateTime DepositInterestCountdown { get; private set; }
 
     // Constructor set
     public BankAccount(string name, AccountType accountType, string currency, decimal initialBalance)
@@ -24,14 +26,12 @@ public class BankAccount : IBankAccount
         Currency = currency;
         Balance = initialBalance;
         LastUpdated = DateTime.Now;
-        if (AccountType == AccountType.Savings)
-        {
-            InterestRate = 0.02m; // 2% Interest
-        }
+        InterestDate = DateTime.Now;
+        DepositInterestCountdown = DateTime.Now;
     }
 
     [JsonConstructor]
-    public BankAccount(Guid id, string name, AccountType accountType, string currency, decimal balance, DateTime lastUpdated, List<TransactionBank>? transaction)
+    public BankAccount(Guid id, string name, AccountType accountType, string currency, decimal balance, DateTime lastUpdated, List<TransactionBank>? transaction, decimal pendingInterest, DateTime interestDate, DateTime depositInterestCountdown)
     {
         Id = id;
         Name = name;
@@ -40,14 +40,17 @@ public class BankAccount : IBankAccount
         Balance = balance;
         LastUpdated = lastUpdated;
         Transaction = transaction ?? new();
-        if (AccountType == AccountType.Savings)
-        {
-            InterestRate = 0.02m; // 2% Interest
-        }
+        PendingInterest = pendingInterest;
+        InterestDate = interestDate;
+        DepositInterestCountdown = depositInterestCountdown;
+
     }
 
     // Unassigned external account for deposits and withdrawals
     private static readonly BankAccount External = new BankAccount("External", AccountType.Deposit, "SEK", 0);
+
+    // Intersest rate
+    decimal InterestRate = 0.02m;
 
     public void Deposit(decimal amount)
     {
@@ -70,18 +73,43 @@ public class BankAccount : IBankAccount
         recieverAccount.Transaction.Add(new TransactionBank(this, recieverAccount, amount, TransactionType.TransferTo));
     }
 
+    // Adds value of (Balance * 0,02 * Days since this method was called/365) to decimal PendingInterest. Should be run through AccountService.InterestUpdater() at startup (Initialization)
+    public void AddInterest()
+    {
+        if (AccountType == AccountType.Savings)
+        {
+            TimeSpan sinceLastAddition = DateTime.Now - InterestDate;
+            decimal yearly = sinceLastAddition.Days / 365m;
+            PendingInterest += Balance * InterestRate * yearly;
+            InterestDate = DateTime.Now;
+        }
+    }
+    // Deposits pending interest if a year or more has passed, removes 1 year of days from DepositInterstCountdown
     public void DepositInterest()
     {
-        if (AccountType == AccountType.Savings) {
-
-            TimeSpan sinceCreation = DateTime.Now - LastUpdated;
-            var yearly = sinceCreation.Days / 365;
-            var interest = Balance * InterestRate * yearly;
-            if (yearly > 0)
+        if (AccountType == AccountType.Savings)
+        {
+            TimeSpan lastInterestDeposit = DateTime.Now - DepositInterestCountdown;
+            if (lastInterestDeposit.Days > 365)
             {
-                Balance = decimal.Round(Balance -= interest, 2);
-                Transaction.Add(new TransactionBank(External, this, interest, TransactionType.Deposit));
+                Balance += PendingInterest;
+                Transaction.Add(new TransactionBank(External, this, PendingInterest, TransactionType.Interest));
+                PendingInterest = 0;
+                DepositInterestCountdown = DepositInterestCountdown.AddDays(-365);
             }
         }
+    }
+    // Dev commands for testing interest function
+    public void DevAddInterest()
+    {
+        InterestDate = InterestDate.AddDays(-10);
+    }
+    public void DevDepositInterest()
+    {
+        Balance = decimal.Round(Balance += PendingInterest, 2);
+        Transaction.Add(new TransactionBank(External, this, PendingInterest, TransactionType.Interest));
+        PendingInterest = 0;
+        // (Dev button doesn't reset interest cooldown timer)
+        //DepositInterestCountdown = DepositInterestCountdown.AddDays(-365);
     }
 }

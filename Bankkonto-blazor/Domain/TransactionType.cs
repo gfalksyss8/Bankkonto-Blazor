@@ -6,4 +6,5 @@ public enum TransactionType
     Withdraw,
     TransferTo,
     TransferFrom,
+    Interest,
 }

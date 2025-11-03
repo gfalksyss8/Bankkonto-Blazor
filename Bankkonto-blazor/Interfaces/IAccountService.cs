@@ -18,4 +18,6 @@ public interface IAccountService
 
     Task Deposit(BankAccount account, decimal depositAmount);
     Task Withdraw(BankAccount account, decimal withdrawAmount);
+    Task DevAddInterest(BankAccount account);
+    Task DevDepositInterest(BankAccount account);
 }

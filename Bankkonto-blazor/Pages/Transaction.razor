@@ -1,7 +1,8 @@
 @page "/Transaction"
 @using Microsoft.AspNetCore.Authorization.Infrastructure
-
 @inject IAccountService AccountService;
+
+<PageTitle>Transactions</PageTitle>
 
 <!-- Local warning & confirm message, clear after every successful method call or input from user -->
 @if (warningMessage != string.Empty) {

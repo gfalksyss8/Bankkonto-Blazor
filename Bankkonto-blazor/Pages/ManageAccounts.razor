@@ -1,6 +1,8 @@
 @page "/ManageAccounts"
 @inject IAccountService AccountService;
 
+<PageTitle>Manage Accounts</PageTitle>
+
 <!-- Local warning & confirm message, clear after every successful method call or input from user -->
 @if (warningMessage != string.Empty) {
     <div class="alert alert-danger alert-dismissible fade show">
@@ -30,8 +32,19 @@
 <br />
 
 @if (chosenAccountIndex != -1) {
+    // Display account info if an account is chosen
     <h5>@AccountService.GetAccountIndex(chosenAccountIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).Id</i></small></h5>
     <h5>Balance: @AccountService.GetAccountIndex(chosenAccountIndex).Balance @AccountService.GetAccountIndex(chosenAccountIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(chosenAccountIndex).AccountType Account, Created: @AccountService.GetAccountIndex(chosenAccountIndex).LastUpdated</i></small></h5>
+    // Display pending interest balance for savings accounts
+    @if (@AccountService.GetAccountIndex(chosenAccountIndex).AccountType == AccountType.Savings) 
+    {
+    <h5><small class="text-success"><i>+@decimal.Round(AccountService.GetAccountIndex(chosenAccountIndex).PendingInterest, 2) @AccountService.GetAccountIndex(chosenAccountIndex).Currency Interest Pending (Added in @((DateTime.Now.AddDays(365)-@AccountService.GetAccountIndex(chosenAccountIndex).DepositInterestCountdown).Days) Days)</i></small>
+        <div class="btn-group">
+        <button type="button" class="btn btn-success" @onclick="() => dev10DaysInterestMethod(chosenAccountIndex)">(DEV) Add 10 days worth of interest</button>
+        <button type="button" class="btn btn-success" @onclick="() => devDepositInterestMethod(chosenAccountIndex)">(DEV) Deposit current pending interest to total balance</button>
+    </div> 
+    </h5> 
+    }
     <div class="btn-group">
         <button type="button" class="btn btn-primary disabled">Edit Account</button>
         <button type="button" class="btn btn-danger" @onclick="() => RemoveAccountMethod()">Remove Account</button>
@@ -43,11 +56,9 @@
 <h4>Change login password</h4>
 <form>
     <div class="input-group">
-        <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
         <input type="password" class="form-control" placeholder="Current password" @bind-value="oldPassword">
     </div>
     <div class="input-group"
-        <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
         <input type="password" class="form-control" placeholder="New password" @bind-value="newPassword">
     </div>
     <br />
@@ -105,5 +116,17 @@
             clearWarning();
             warningMessage = "Current password is incorrect";
         }
+    }
+
+    // DEV
+    void dev10DaysInterestMethod(int accountIndex) {
+        AccountService.DevAddInterest(AccountService.GetAccountIndex(accountIndex));
+        clearWarning();
+        confirmMessage = $"DEV COMMAND: 10 days of interest added to pending amount" ;
+    }
+    void devDepositInterestMethod(int accountIndex) {
+        AccountService.DevDepositInterest(AccountService.GetAccountIndex(accountIndex));
+        clearWarning();
+        confirmMessage = "DEV COMMAND: Pending amount immediately added to total account balance (Balance rounded to 2 places, ensure interest is above 0,0X)";
     }
 }

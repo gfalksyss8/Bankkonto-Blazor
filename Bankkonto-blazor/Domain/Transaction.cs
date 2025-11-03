@@ -47,6 +47,7 @@ public class TransactionBank
             TransactionType.Withdraw => senderAccount.Balance,
             TransactionType.TransferFrom => senderAccount.Balance,
             TransactionType.TransferTo => recieverAccount.Balance,
+            TransactionType.Interest => recieverAccount.Balance,
             _ => 0
         };
     }

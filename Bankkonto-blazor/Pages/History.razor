@@ -1,7 +1,8 @@
 @page "/History"
 @using System.Security.Authentication.ExtendedProtection
-
 @inject IAccountService AccountService;
+
+<PageTitle>History</PageTitle>
 
 <h3>History & Timestamps</h3>
 @if (_accounts.Count == 0) { <p>No accounts found!</p> }
@@ -19,8 +20,10 @@ else
         </InputSelect>
     </div>
     
-    <div class="mb-2">
-        <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Date)">
+    <div class="mb-2 btn-group">
+        <button type="button" class="btn btn-sm
+        @( currentKey==SortKey.Date ? "btn-primary" : "btn-outline-primary")
+        " @onclick="() => SetSort(SortKey.Date)">
             @if (isDescending) {
                 <p>▼ Date</p>
             }
@@ -28,7 +31,9 @@ else
                 <p>▲ Date</p>
             }
         </button>
-        <button class="btn btn-sm" @onclick="() => SetSort(SortKey.Amount)">
+        <button type="button" class="btn btn-sm
+        @( currentKey==SortKey.Amount ? "btn-primary" : "btn-outline-primary")
+        " @onclick="() => SetSort(SortKey.Amount)">
             @if (isDescending) {
                 <p>▼ Amount</p>
             }
@@ -56,11 +61,17 @@ else
                 @foreach (var transaction in sortedTransaction()) {
                     <tr>
                         <td>@transaction.LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
-                        <td>@transaction.Amount @(_selectedAccount.Currency)</td>
+                        <td>@decimal.Round(transaction.Amount, 2) @(_selectedAccount.Currency)</td>
                         <td>@transaction.TransactionType</td>
                         <td>@transaction.BalanceAfter @(_selectedAccount.Currency)</td>
-                        <td>From: @transaction.SenderAccountId.ToString()[..6] To: 
-                        @if (transaction.RecieverAccountName == "External") {
+                        <td>
+                        From: @if (transaction.SenderAccountName == "External") {
+                                @transaction.SenderAccountName
+                            }
+                            else {
+                            @transaction.SenderAccountId.ToString()[..6]
+                            }
+                        To: @if (transaction.RecieverAccountName == "External") {
                                 @transaction.RecieverAccountName
                             }
                             else {

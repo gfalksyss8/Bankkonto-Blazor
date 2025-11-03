@@ -3,18 +3,27 @@
 
 <PageTitle>Home</PageTitle>
 
+<!-- Local warning & confirm message, clear after every successful method call or input from user -->
+@if (warningMessage != string.Empty) {
+    <div class="alert alert-danger alert-dismissible fade show">
+        @warningMessage
+    </div>
+}
+@if (confirmMessage != string.Empty) {
+    <div class="alert alert-success alert-dismissible fade show">
+        @confirmMessage
+    </div>
+}
+
 <h1>Home</h1>
 <br />
 @if (!AccountService.IsAuthorized()) 
 {
     <div class="form-group">
-    <label for="pwd">Password:</label>
+    <label for="pwd">Password: <small class="text-muted">Defaults to "admin" if not set</small></label>
     <input type="password" class="form-control" id="pwd" @bind-value="password"><br />
     <button type="button" class="btn btn-primary btn" @onclick="() => tryPassword()">Enter</button>
     </div>
-    if (warningMessage != string.Empty) {
-    <p style="color: red">@warningMessage</p>
-    }
 }
 
 <br />
@@ -60,13 +69,16 @@
     }
 
     void tryPassword() {
+        clearMessage();
         if (password != null) 
         {
             AccountService.TryAuthorize(password);
             if (!AccountService.IsAuthorized()) {
                 warningMessage = "Wrong password!";
             }
-            confirmMessage = "Password changed successfully";
+            else {
+            confirmMessage = "Logged in successfully";
+            }
         }
     }
     
