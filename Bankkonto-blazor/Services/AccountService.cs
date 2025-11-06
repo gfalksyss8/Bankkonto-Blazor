@@ -31,8 +31,11 @@ public class AccountService : IAccountService
         var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
         string fromStoragePass = await _storageService.GetItemAsync<string>(PassKey);
         _accounts.Clear();
+
         if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
-        if (fromStoragePass != string.Empty) { _password = fromStoragePass; }
+        if (!string.IsNullOrWhiteSpace(fromStoragePass)) { _password = fromStoragePass; }
+        else { await SaveAsyncPassword(); }
+            
         isLoaded = true;
         await InterestUpdater();
     }

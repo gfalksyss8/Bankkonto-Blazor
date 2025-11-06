@@ -70,7 +70,7 @@
 
     void tryPassword() {
         clearMessage();
-        if (password != null) 
+        //if (password != null) 
         {
             AccountService.TryAuthorize(password);
             if (!AccountService.IsAuthorized()) {
