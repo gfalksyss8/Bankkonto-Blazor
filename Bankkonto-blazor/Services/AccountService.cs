@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
+using Microsoft.JSInterop;
 
 namespace Bankkonto_blazor.Services;
 
@@ -42,6 +43,30 @@ public class AccountService : IAccountService
 
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
     private async Task SaveAsyncPassword() => await _storageService.SetItemAsync(PassKey, _password);
+
+    // Import & Export methods, download trigger
+
+    public async Task ExportAccountsAsync()
+    {
+        string json = await _storageService.ExportAsJsonAsync<List<BankAccount>>(StorageKey);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            json = "[]";
+        }
+
+        await _storageService.DownloadAsJsonAsync("accounts-export.json", json);
+    }
+
+    public async Task ImportAccountsAsync(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new ArgumentException("JSON empty");
+        }
+
+        await _storageService.ImportFromJsonAsync<List<BankAccount>>(StorageKey, json);
+        await EnsureLoadedAsync();
+    }
 
     // Password authorization
     public event Action OnAuthStateChanged;

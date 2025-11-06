@@ -58,6 +58,20 @@
         </NavLink>
     </div>
 }
+<br />
+<div class="btn-group">
+    <button type="button" 
+            class="btn btn-primary" 
+            @onclick="ImportMethod"
+            disabled="@(!fileIsUploaded)"
+        >Import</button>
+    <button type="button" 
+            class="btn btn-primary" 
+            @onclick="ExportMethod"
+            disabled="@(!AccountService.IsAuthorized())"
+        >Export</button>
+</div> 
+<InputFile OnChange="GetFile" accept=",json" />
 
 @code {
     string password;
@@ -67,6 +81,8 @@
         warningMessage = string.Empty;
         confirmMessage = string.Empty;
     }
+    private IBrowserFile? uploadedFile;
+    bool fileIsUploaded => uploadedFile is not null;
 
     void tryPassword() {
         clearMessage();
@@ -82,10 +98,34 @@
         }
     }
     
-// Create new list _accounts, set using GetAccounts() method
-private List<BankAccount> _accounts = new();
-protected override async Task OnInitializedAsync() {
-    await AccountService.EnsureLoadedAsync();
-    _accounts = await AccountService.GetAccounts();
+    // Create new list _accounts, set using GetAccounts() method
+    private List<BankAccount> _accounts = new();
+    protected override async Task OnInitializedAsync() {
+        await AccountService.EnsureLoadedAsync();
+        _accounts = await AccountService.GetAccounts();
     }
+
+    // Local import & export methods
+    async Task ImportMethod() {
+        if (uploadedFile is null) { return; }
+
+        // Convert to stream --> string using StreamReader
+        using var stream = uploadedFile.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        var json = await reader.ReadToEndAsync();
+
+        // Send json string to AccountService
+        await AccountService.ImportAccountsAsync(json);
+        confirmMessage = "Account imported successfully";
+    }
+    async Task ExportMethod() {
+        await AccountService.ExportAccountsAsync();
+        confirmMessage = "Accounts exported successfully, downloading...";
+    }
+
+    // Get and save file
+    private async Task GetFile(InputFileChangeEventArgs e) {
+        uploadedFile = e.File;
+    }
+
 }

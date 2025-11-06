@@ -38,4 +38,34 @@ public class StorageService : IStorageService
             throw;
         }
     }
+
+    public async Task<string> ExportAsJsonAsync<T>(string key)
+    {
+        var json = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+        return json;
+    }
+
+    public async Task ImportFromJsonAsync<T>(string key, string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new ArgumentException("Imported JSON content is empty. File:", nameof(json));
+        }
+
+        var obj = JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(obj, _jsonSerializerOptions));
+    }
+    
+    public async Task DownloadAsJsonAsync(string fileName, string json)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            fileName = "accounts.json";
+        }
+
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        string base64 = Convert.ToBase64String(bytes);
+
+        await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, base64);
+    }
 }
