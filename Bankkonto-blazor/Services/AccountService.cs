@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.JSInterop;
 
 namespace Bankkonto_blazor.Services;
 
@@ -31,8 +33,11 @@ public class AccountService : IAccountService
         var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
         string fromStoragePass = await _storageService.GetItemAsync<string>(PassKey);
         _accounts.Clear();
+
         if (fromStorage is { Count: > 0 }) { _accounts.AddRange(fromStorage); }
-        if (fromStoragePass != string.Empty) { _password = fromStoragePass; }
+        if (!string.IsNullOrWhiteSpace(fromStoragePass)) { _password = fromStoragePass; }
+        else { await SaveAsyncPassword(); }
+            
         isLoaded = true;
         await InterestUpdater();
     }
@@ -40,8 +45,46 @@ public class AccountService : IAccountService
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
     private async Task SaveAsyncPassword() => await _storageService.SetItemAsync(PassKey, _password);
 
+    // Import & Export methods, download trigger
+
+    public async Task ExportAccountsAsync()
+    {
+        string json = await _storageService.ExportAsJsonAsync<List<BankAccount>>(StorageKey);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            json = "[]";
+        }
+
+        await _storageService.DownloadAsJsonAsync("accounts-export.json", json);
+    }
+
+    public async Task ImportAccountsAsync(string json)
+    {
+        System.Console.WriteLine("Import method called");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new ArgumentException("JSON empty");
+        }
+
+        var import = await _storageService.ImportFromJsonAsync<List<BankAccount>>(StorageKey, json);
+        _accounts.Clear();
+
+        if (import is { Count: > 0 }) { _accounts.AddRange(import); }
+        System.Console.WriteLine("Accounts imported to localStorage");
+
+        NotifyAccountsChanged();
+        await InterestUpdater();
+    }
+
+    // Update account data after import
+    public event Action OnAccountsChanged;
+    public void NotifyAccountsChanged()
+    {
+        System.Console.WriteLine("OnAccountsChanged successfully invoked");
+        OnAccountsChanged?.Invoke();
+    }
+
     // Password authorization
-    public event Action OnAuthStateChanged;
     public bool TryAuthorize(string password)
     {
         if (Authorized == false)
@@ -59,11 +102,14 @@ public class AccountService : IAccountService
             return Authorized;
         }
     }
-    public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
     public bool IsAuthorized()
     {
         return Authorized;
     }
+
+    // State change to update NavMenu from Home
+    public event Action OnAuthStateChanged;
+    public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
 
     // Get & set password methods
     public string GetPassword()
@@ -92,14 +138,15 @@ public class AccountService : IAccountService
     }
 
     // return list of accounts
-    public async Task<List<BankAccount>> GetAccounts()
+    public List<BankAccount> GetAccounts()
     {
-        return _accounts.Cast<BankAccount>().ToList();
+        return _accounts;
     }
 
     // User input int determines return index from list _accounts
     public BankAccount GetAccountIndex(int index) => _accounts[index];
 
+    // Methods that call BankAccount logic to change balance for account
     public async Task Withdraw(BankAccount account, decimal withdrawAmount)
     {
         account.Withdraw(withdrawAmount);
@@ -120,7 +167,7 @@ public class AccountService : IAccountService
     }
     public async Task InterestUpdater()
     {
-        var _accounts = await GetAccounts();
+        var _accounts = GetAccounts();
         foreach (var account in _accounts)
         {
             account.AddInterest();

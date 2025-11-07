@@ -26,38 +26,41 @@
     </div>
 }
 
-<br />
 @if (AccountService.IsAuthorized()) {
+    <div class="list-group">
+        <a href="CreateAccount" class="list-group-item list-group-item-action">Create Account</a>
+        <a href="ManageAccounts" class="list-group-item list-group-item-action">Manage Accounts</a>
+        <a href="DepositWithdraw" class="list-group-item list-group-item-action">Deposit & Withdraw</a>
+        <a href="Transaction" class="list-group-item list-group-item-action">Transaction</a>
+        <a href="History" class="list-group-item list-group-item-action">History</a>
+    </div>
+    
+}
+<br />
+<hr />
+<h2>Import & Export Account Data</h2>
+<br />
+<div class="btn-group">
+    <button type="button" 
+            class="btn btn-primary" 
+            @onclick="ImportMethod"
+            disabled="@(!fileIsUploaded)"
+        >Import</button>
+    <button type="button" 
+            class="btn btn-primary" 
+            @onclick="ExportMethod"
+            disabled="@(!AccountService.IsAuthorized())"
+        >Export</button>
+</div> 
+<InputFile OnChange="GetFile" accept=",json" />
+<br />
 
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="CreateAccount">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create Account
-        </NavLink>
-    </div>
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="ManageAccounts">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Accounts
-        </NavLink>
-    </div>
-
-    <br />
-
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="DepositWithdraw">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Deposit/Withdraw
-        </NavLink>
-    </div>
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="Transaction">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Transaction
-        </NavLink>
-    </div>
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="History">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> History
-        </NavLink>
+@if (!AccountService.IsAuthorized()) {
+    <div class="alert alert-warning fade show">
+        <i>Login to export current account data</i>
     </div>
 }
+
 
 @code {
     string password;
@@ -67,10 +70,12 @@
         warningMessage = string.Empty;
         confirmMessage = string.Empty;
     }
+    private IBrowserFile? uploadedFile;
+    bool fileIsUploaded => uploadedFile is not null;
 
     void tryPassword() {
         clearMessage();
-        if (password != null) 
+        //if (password != null) 
         {
             AccountService.TryAuthorize(password);
             if (!AccountService.IsAuthorized()) {
@@ -82,10 +87,45 @@
         }
     }
     
-// Create new list _accounts, set using GetAccounts() method
-private List<BankAccount> _accounts = new();
-protected override async Task OnInitializedAsync() {
-    await AccountService.EnsureLoadedAsync();
-    _accounts = await AccountService.GetAccounts();
+    // Create new list _accounts,
+    // set list to current BankAccounts list on startup and state change
+    private List<BankAccount> _accounts = new();
+    protected override async Task OnInitializedAsync() {
+        await AccountService.EnsureLoadedAsync();
+        _accounts = AccountService.GetAccounts();
+        AccountService.OnAccountsChanged += OnAccountsChanged;
     }
+    async void OnAccountsChanged() {
+        var updated = AccountService.GetAccounts();
+        _accounts = new List<BankAccount>(updated);
+        await InvokeAsync(() => 
+        {
+            Console.WriteLine("Refreshing UI...");
+            StateHasChanged();
+        });
+    }
+
+    // Local import & export methods
+    async Task ImportMethod() {
+        if (uploadedFile is null) { return; }
+
+        // Convert to stream --> string using StreamReader
+        using var stream = uploadedFile.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        var json = await reader.ReadToEndAsync();
+
+        // Send json string to AccountService
+        await AccountService.ImportAccountsAsync(json);
+        confirmMessage = "Account imported successfully";
+    }
+    async Task ExportMethod() {
+        await AccountService.ExportAccountsAsync();
+        confirmMessage = "Accounts exported successfully, downloading...";
+    }
+
+    // Get and save file
+    private async Task GetFile(InputFileChangeEventArgs e) {
+        uploadedFile = e.File;
+    }
+
 }

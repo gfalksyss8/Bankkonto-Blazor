@@ -84,12 +84,6 @@
     </button>
     </EditForm>
 
-<br />
-<hr />
-@foreach (var account in _accounts) {
-    <list>Account: @account.Name - Available amount: @account.Balance @account.Currency<br />Type: @account.AccountType - Account created: @account.LastUpdated<br /></list>
-}
-
 @code {
     // Declare variables
     string warningMessage = string.Empty;
@@ -98,13 +92,27 @@
         warningMessage = string.Empty;
         confirmMessage = string.Empty;
     }
-    private readonly CreateAccountModel _model = new();
-    private List<BankAccount> _accounts = new();
 
+    // Create new list _accounts,
+    // set list to current BankAccounts list on startup and state change
+    private List<BankAccount> _accounts = new();
     protected override async Task OnInitializedAsync() {
-        _accounts = await AccountService.GetAccounts();
+        await AccountService.EnsureLoadedAsync();
+        _accounts = AccountService.GetAccounts();
+        AccountService.OnAccountsChanged += OnAccountsChanged;
+    }
+    async void OnAccountsChanged() {
+        var updated = AccountService.GetAccounts();
+        _accounts = new List<BankAccount>(updated);
+        await InvokeAsync(() => 
+        {
+            Console.WriteLine("Refreshing UI...");
+            StateHasChanged();
+        });
     }
 
+    // Model for account creation
+    private readonly CreateAccountModel _model = new();
     private async Task CreateAccountAsync() {
         try 
         {
@@ -116,7 +124,7 @@
 
             clearWarning();
             confirmMessage = "Account created successfully";
-            _accounts = await AccountService.GetAccounts();
+            _accounts = AccountService.GetAccounts();
             _model.Clear();
             StateHasChanged();
         }

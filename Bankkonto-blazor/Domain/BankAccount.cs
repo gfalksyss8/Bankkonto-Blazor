@@ -6,7 +6,6 @@ namespace Bankkonto_blazor.Domain;
 public class BankAccount : IBankAccount
 {
     // Constructor
-    //private decimal initialBalance;
     public Guid Id { get; private set; } = Guid.NewGuid();
     public AccountType AccountType { get; private set; }
     public string Name { get; private set; } = "NoName";
@@ -52,6 +51,7 @@ public class BankAccount : IBankAccount
     // Intersest rate
     decimal InterestRate = 0.02m;
 
+    // Deposit and withdrawal methods, adds transaction to Transaction list for each bank account
     public void Deposit(decimal amount)
     {
         Balance = decimal.Round(Balance += amount, 2);
@@ -99,7 +99,8 @@ public class BankAccount : IBankAccount
             }
         }
     }
-    // Dev commands for testing interest function
+
+    // Dev commands for testing interest function, simulates 10 days passed by removing 10 days from InterestDate
     public void DevAddInterest()
     {
         InterestDate = InterestDate.AddDays(-10);
