@@ -3,13 +3,22 @@
 A basic Blazor webpage written in C# that emulates a Bank's GUI for displaying and managing a users bank accounts.
 Made for _Objektorienterad programmering grund, Inlämningsuppgift Bankkonto (Blazor WASM)_
 
-To clone, `git clone gfalksyss8/Bankkonto-Blazor`
+To download project:
+`git clone gfalksyss8/Bankkonto-Blazor`
+
+> [!IMPORTANT]
+> Ensure you are using [].NET 8.0.414](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or newer
+
+Run program from compiler of your choice, opens in default web browser
 
 ## Features
 
 - Home
 	- Password input that hides all GUI until authorized
 	- NAV Menu for pages
+	- Import and export of localStorage .json file
+		- Button for import is disabled until a file is uploaded
+		- Button for export is disabled until user is logged in
 
 - Create account
 	- Create a new bankaccount, with validation for incorrect entries and required fields
