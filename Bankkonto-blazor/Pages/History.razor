@@ -131,12 +131,23 @@ else
     // Initialize _accounts loading from local storage
     protected override async Task OnInitializedAsync() {
         await AccountService.EnsureLoadedAsync();
-        _accounts = await AccountService.GetAccounts();
+        _accounts = AccountService.GetAccounts();
         if (_accounts.Count > 0)
         {
             _selectedAccount = _accounts[0];
             _selectedAccountId = _accounts[0].Id;
         }
+
+    AccountService.OnAccountsChanged += OnAccountsChanged;
+    }
+    async void OnAccountsChanged() {
+        var updated = AccountService.GetAccounts();
+        _accounts = new List<BankAccount>(updated);
+        await InvokeAsync(() => 
+        {
+            Console.WriteLine("Refreshing UI...");
+            StateHasChanged();
+        });
     }
 
     // Sorting

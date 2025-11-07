@@ -9,6 +9,6 @@ public interface IStorageService
 
     // Import and export
     Task<string> ExportAsJsonAsync<T>(string key);
-    Task ImportFromJsonAsync<T>(string key, string json);
+    Task<T> ImportFromJsonAsync<T>(string key, string json);
     Task DownloadAsJsonAsync(string fileName, string json);
 }

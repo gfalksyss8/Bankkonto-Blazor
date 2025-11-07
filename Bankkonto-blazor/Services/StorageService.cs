@@ -45,15 +45,16 @@ public class StorageService : IStorageService
         return json;
     }
 
-    public async Task ImportFromJsonAsync<T>(string key, string json)
+    public async Task<T> ImportFromJsonAsync<T>(string key, string json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
             throw new ArgumentException("Imported JSON content is empty. File:", nameof(json));
         }
 
-        var obj = JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(obj, _jsonSerializerOptions));
+        var import = JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions);
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonSerializer.Serialize(import, _jsonSerializerOptions));
+        return import;
     }
     
     public async Task DownloadAsJsonAsync(string fileName, string json)
