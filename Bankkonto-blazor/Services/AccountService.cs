@@ -127,9 +127,9 @@ public class AccountService : IAccountService
     }
 
     // Remove chosen account
-    public async Task RemoveAccount(int index)
+    public async Task RemoveAccount(BankAccount account)
     {
-        _accounts.RemoveAt(index);
+        _accounts.Remove(account);
         await SaveAsync();
     }
 
@@ -140,7 +140,12 @@ public class AccountService : IAccountService
     }
 
     // User input int determines return index from list _accounts
-    public BankAccount GetAccountIndex(int index) => _accounts[index];
+    public BankAccount GetAccountIndex(int index)
+    {
+        if (index < 0 || index >= _accounts.Count)
+            return null;
+        return _accounts[index];
+    }
 
     // Methods that calls BankAccount logic to change balance for account
     public async Task Withdraw(BankAccount account, decimal withdrawAmount)

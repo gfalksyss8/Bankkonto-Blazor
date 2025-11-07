@@ -15,7 +15,7 @@ public interface IAccountService
     Task SetPassword(string newPassword);
 
     Task<BankAccount> CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance);
-    Task RemoveAccount(int index);
+    Task RemoveAccount(BankAccount account);
     List<BankAccount> GetAccounts();
     BankAccount GetAccountIndex(int index);
 
