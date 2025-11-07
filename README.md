@@ -7,7 +7,7 @@ To download project:
 `git clone gfalksyss8/Bankkonto-Blazor`
 
 > [!IMPORTANT]
-> Ensure you are using [].NET 8.0.414](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or newer
+> Ensure you are using [.NET 8.0.414](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or newer
 
 Run program from compiler of your choice, opens in default web browser
 
