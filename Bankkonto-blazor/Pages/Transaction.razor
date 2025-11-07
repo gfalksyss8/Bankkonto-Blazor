@@ -53,8 +53,16 @@
     }
     <br />
 
-    <h5>@AccountService.GetAccountIndex(senderIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).Id</i></small></h5>
-    <h5>Balance: @AccountService.GetAccountIndex(senderIndex).Balance @AccountService.GetAccountIndex(senderIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).AccountType Account, Created: @AccountService.GetAccountIndex(senderIndex).LastUpdated</i></small></h5>
+    <div class="row">
+        <div class="col">
+            <h5>@AccountService.GetAccountIndex(senderIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).Id</i></small></h5>
+            <h5>Balance: @AccountService.GetAccountIndex(senderIndex).Balance @AccountService.GetAccountIndex(senderIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(senderIndex).AccountType Account, Created: @AccountService.GetAccountIndex(senderIndex).LastUpdated</i></small></h5>
+        </div>
+        <div class="col">
+            <h5>@AccountService.GetAccountIndex(recieverIndex).Name <small class="text-muted"><i>@AccountService.GetAccountIndex(recieverIndex).Id</i></small></h5>
+            <h5>Balance: @AccountService.GetAccountIndex(recieverIndex).Balance @AccountService.GetAccountIndex(recieverIndex).Currency <small class="text-muted"><i>@AccountService.GetAccountIndex(recieverIndex).AccountType Account, Created: @AccountService.GetAccountIndex(recieverIndex).LastUpdated</i></small></h5>
+        </div>
+    </div>
     <br />
 
     @if (senderIndex == recieverIndex) { // Dont show transfer balance button if chosen accounts are the same
@@ -66,7 +74,11 @@
     <label>Amount to transfer to @AccountService.GetAccountIndex(recieverIndex).Name</label>
     <div class="mb-2">
         <InputNumber class="form-control" placeholder="Amount to transfer..." @bind-Value="transferAmount"></InputNumber>
-        <button type="button" class="btn btn-primary" @onclick="TransferModel">Transfer Balance</button>
+        <button type="button" class="btn btn-primary" @onclick="TransferModel">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5"/>
+        </svg>
+        Transfer Balance</button>
     </div>
     <br/>
     }

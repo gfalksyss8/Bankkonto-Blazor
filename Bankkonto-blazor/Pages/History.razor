@@ -4,12 +4,16 @@
 
 <PageTitle>History</PageTitle>
 
-<h3>History & Timestamps</h3>
-@if (_accounts.Count == 0) { <p>No accounts found!</p> }
+<h3>Choose an accounts</h3>
+@if (_accounts.Count == 0) { 
+    <div class="alert alert-warning fade show">
+        <i>No accounts found!</i>
+    </div>
+}
 else 
 {
     <div class="mb-2">
-        <label>Välj konto</label>
+        <label>Choose an account</label>
         <InputSelect TValue="Guid"
                     class="form-select"
                     id="accountSelect"
@@ -42,10 +46,9 @@ else
             }
         </button>
     </div>
+
     @if (!_selectedAccount.Transaction.Any()) 
-        {
-            <p>No transactions found for this account.</p>
-        }
+        { <p>No transactions found for this account.</p> }
     else {
         <table class="table table-sm">
             <thead>
@@ -83,18 +86,6 @@ else
             </tbody>
         </table>
     }
-        <br /> 
-        <hr />
-        <p>All history:</p>
-        <br />
-        @foreach (var account in _accounts) {
-            @foreach (var transaction in account.Transaction) {
-                <list>Account: @account.Name - Transaction: @transaction.TransactionType - 
-                Amount: @transaction.Amount @account.Currency - 
-                Date: @transaction.LastUpdated<br />
-                </list>
-            }
-        }
 }
 
 @code {
@@ -128,7 +119,7 @@ else
         }
     }
 
-    // Initialize _accounts loading from local storage
+    // Initialize _accounts loading from local storage & refresh after import
     protected override async Task OnInitializedAsync() {
         await AccountService.EnsureLoadedAsync();
         _accounts = AccountService.GetAccounts();
@@ -151,7 +142,6 @@ else
     }
 
     // Sorting
-
     private IEnumerable<TransactionBank> sortedTransaction() {
         if (_selectedAccount == null) {
             return Enumerable.Empty<TransactionBank>();
