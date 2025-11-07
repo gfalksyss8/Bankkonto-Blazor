@@ -48,7 +48,7 @@ public class BankAccount : IBankAccount
     // Unassigned external account for deposits and withdrawals
     private static readonly BankAccount External = new BankAccount("External", AccountType.Deposit, "SEK", 0);
 
-    // Intersest rate
+    // Interestt rate, 2%
     decimal InterestRate = 0.02m;
 
     // Deposit and withdrawal methods, adds transaction to Transaction list for each bank account
@@ -105,6 +105,8 @@ public class BankAccount : IBankAccount
     {
         InterestDate = InterestDate.AddDays(-10);
     }
+
+    // Immediately deposits pending interest to balance
     public void DevDepositInterest()
     {
         Balance = decimal.Round(Balance += PendingInterest, 2);

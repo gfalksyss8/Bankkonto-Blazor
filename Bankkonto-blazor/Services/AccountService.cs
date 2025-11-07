@@ -1,9 +1,3 @@
-using System.ComponentModel;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Microsoft.JSInterop;
-
 namespace Bankkonto_blazor.Services;
 
 public class AccountService : IAccountService
@@ -22,6 +16,7 @@ public class AccountService : IAccountService
         _storageService = storageService;
     }
     
+    // Loading from storage to password and accounts
     public async Task EnsureLoadedAsync() 
     {
         if(isLoaded) return;
@@ -40,13 +35,14 @@ public class AccountService : IAccountService
             
         isLoaded = true;
         await InterestUpdater();
+        System.Console.WriteLine("IsInitialized successfully called");
     }
 
+    // Save into storage, call after any change
     private async Task SaveAsync() => await _storageService.SetItemAsync(StorageKey, _accounts);
     private async Task SaveAsyncPassword() => await _storageService.SetItemAsync(PassKey, _password);
 
     // Import & Export methods, download trigger
-
     public async Task ExportAccountsAsync()
     {
         string json = await _storageService.ExportAsJsonAsync<List<BankAccount>>(StorageKey);
@@ -54,7 +50,6 @@ public class AccountService : IAccountService
         {
             json = "[]";
         }
-
         await _storageService.DownloadAsJsonAsync("accounts-export.json", json);
     }
 
@@ -63,7 +58,7 @@ public class AccountService : IAccountService
         System.Console.WriteLine("Import method called");
         if (string.IsNullOrWhiteSpace(json))
         {
-            throw new ArgumentException("JSON empty");
+            throw new ArgumentException("but import string was empty");
         }
 
         var import = await _storageService.ImportFromJsonAsync<List<BankAccount>>(StorageKey, json);
@@ -80,7 +75,7 @@ public class AccountService : IAccountService
     public event Action OnAccountsChanged;
     public void NotifyAccountsChanged()
     {
-        System.Console.WriteLine("OnAccountsChanged successfully invoked");
+        System.Console.WriteLine("OnAccountsChanged invoked");
         OnAccountsChanged?.Invoke();
     }
 
@@ -131,6 +126,7 @@ public class AccountService : IAccountService
         return account;
     }
 
+    // Remove chosen account
     public async Task RemoveAccount(int index)
     {
         _accounts.RemoveAt(index);
@@ -146,7 +142,7 @@ public class AccountService : IAccountService
     // User input int determines return index from list _accounts
     public BankAccount GetAccountIndex(int index) => _accounts[index];
 
-    // Methods that call BankAccount logic to change balance for account
+    // Methods that calls BankAccount logic to change balance for account
     public async Task Withdraw(BankAccount account, decimal withdrawAmount)
     {
         account.Withdraw(withdrawAmount);
@@ -165,6 +161,10 @@ public class AccountService : IAccountService
         senderAccount.Transfer(recieverAccount, transferAmount);
         await SaveAsync();
     }
+
+    // Calls both interest methods for all accounts, 
+    // method adds depending on DateTime, so can be called anytime, 
+    // but should only be called on initialization and import
     public async Task InterestUpdater()
     {
         var _accounts = GetAccounts();
